@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dinig</title>
+  <!-- Everything is local: no CDN, no Google Fonts. Fonts live in /fonts/. -->
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="pupil">
+
+  <!-- Home (both modes) -->
+  <section id="home" class="screen active">
+    <div class="home-wrap">
+      <h1 class="logo">Dinig</h1>
+      <p class="tagline">Read aloud. Dinig listens.</p>
+      <div class="big-buttons">
+        <button class="btn btn-big" data-go="pick-name">I'm a Pupil</button>
+        <button class="btn btn-big btn-secondary" data-go="class-view">Teacher / Parent</button>
+      </div>
+      <p class="badges">
+        <span class="badge">No internet or phone needed</span>
+        <span class="badge">Voice deleted after checking</span>
+      </p>
+      <p class="status"><span id="status-dot" class="dot"></span> <span id="status-text">Checking...</span></p>
+    </div>
+  </section>
+
+  <!-- Pick Your Name (pupil) -->
+  <section id="pick-name" class="screen">
+    <header class="bar"><button class="btn btn-back" data-go="home">Back</button><h2>Who is reading?</h2></header>
+    <div id="name-tiles" class="tiles"></div>
+  </section>
+
+  <!-- Pick a Story (pupil) -->
+  <section id="pick-story" class="screen">
+    <header class="bar"><button class="btn btn-back" data-go="pick-name">Back</button><h2>Pick a story, <span class="pupil-name"></span>!</h2></header>
+    <div id="story-cards" class="tiles"></div>
+  </section>
+
+  <!-- Read Aloud (pupil) -->
+  <section id="read-aloud" class="screen">
+    <header class="bar"><button class="btn btn-back" id="read-back">Back</button><h2 id="story-title"></h2></header>
+    <p id="placeholder-note" class="note hidden">Placeholder story: the team will replace this text.</p>
+    <div id="story-text" class="story"></div>
+    <div class="read-controls">
+      <div id="listening" class="listening hidden"><span class="mic-pulse"></span> I'm listening...</div>
+      <div id="timer" class="timer">0:00</div>
+      <button id="read-btn" class="btn btn-big">Start</button>
+    </div>
+    <p id="mic-error" class="note hidden"></p>
+  </section>
+
+  <!-- Checking (pupil) -->
+  <section id="checking" class="screen">
+    <div class="center">
+      <div class="spinner"></div>
+      <p class="big-text">Listening to your reading...</p>
+    </div>
+  </section>
+
+  <!-- My Result (pupil) -->
+  <section id="my-result" class="screen">
+    <header class="bar"><h2 id="result-message">Great reading!</h2></header>
+    <div class="score-row">
+      <div class="score" id="result-score"></div>
+      <div class="time" id="result-time"></div>
+    </div>
+    <div id="result-words" class="story result"></div>
+    <ul class="legend">
+      <li><span class="w w-green">word</span> ✓ correct</li>
+      <li><span class="w w-red">word</span> practice word</li>
+      <li><span class="w w-grey">word</span> skipped</li>
+    </ul>
+    <div class="actions"><button class="btn btn-big" id="result-next">Next</button></div>
+  </section>
+
+  <!-- Story Quiz (pupil) -->
+  <section id="story-quiz" class="screen">
+    <header class="bar"><h2>Story Quiz <span id="quiz-count" class="muted"></span></h2></header>
+    <p id="quiz-question" class="question"></p>
+    <div class="read-controls">
+      <div id="quiz-listening" class="listening hidden"><span class="mic-pulse"></span> I'm listening...</div>
+      <button id="quiz-btn" class="btn btn-big">Answer</button>
+    </div>
+    <p id="quiz-feedback" class="feedback hidden"></p>
+    <div class="actions"><button class="btn btn-big hidden" id="quiz-next">Next</button></div>
+  </section>
+
+  <!-- Practice Again (pupil) -->
+  <section id="practice-again" class="screen">
+    <header class="bar"><h2>Practice Again</h2></header>
+    <div id="practice-sentences" class="story practice"></div>
+    <div class="read-controls">
+      <div id="practice-listening" class="listening hidden"><span class="mic-pulse"></span> I'm listening...</div>
+      <button id="practice-btn" class="btn btn-big">Start</button>
+    </div>
+    <p id="practice-result" class="feedback hidden"></p>
+    <div class="actions"><button class="btn btn-big hidden" id="practice-next">Next</button></div>
+  </section>
+
+  <!-- All Done (pupil) -->
+  <section id="all-done" class="screen">
+    <div class="center">
+      <div class="stars">★ ★ ★</div>
+      <p class="big-text">Great reading, <span class="pupil-name"></span>!</p>
+      <div class="big-buttons">
+        <button class="btn btn-big" data-go="pick-name">Next Reader</button>
+        <button class="btn btn-big btn-secondary" data-go="home">Home</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Class View (teacher / parent) -->
+  <section id="class-view" class="screen">
+    <header class="bar">
+      <button class="btn btn-back" data-go="home">Home</button>
+      <h2>Class View <span class="badge">Sample class</span></h2>
+      <span class="status small"><span id="status-dot-2" class="dot"></span> <span id="status-text-2"></span></span>
+    </header>
+    <div class="class-tools">
+      <label>Sort:
+        <select id="sort-select">
+          <option value="newest">Newest first</option>
+          <option value="help">Needs help first</option>
+        </select>
+      </label>
+      <form id="add-pupil" class="add-pupil">
+        <input name="first_name" placeholder="First name or class no." required maxlength="40">
+        <select name="grade"><option value="3">Grade 3</option><option value="4">Grade 4</option></select>
+        <button class="btn btn-small" type="submit">Add Pupil</button>
+      </form>
+    </div>
+    <div class="class-grid">
+      <table class="class-table">
+        <thead><tr><th>Pupil</th><th>Latest score</th><th>Time</th><th>Trouble words</th><th>Tip</th><th>Last 5 readings</th></tr></thead>
+        <tbody id="class-rows"></tbody>
+      </table>
+    </div>
+    <p class="muted small">Heatmap: green 90%+ · amber 75–89% · red below 75% (needs help) · – no reading yet.</p>
+  </section>
+
+  <script src="app.js"></script>
+</body>
+</html>

@@ -22,3 +22,5 @@ temp/
 
 # Our private notes
 prompts.txt
+# Logs
+*.log
