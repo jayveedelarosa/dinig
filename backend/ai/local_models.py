@@ -6,6 +6,7 @@ Nothing here ever calls a cloud API.
 """
 import json
 import logging
+import urllib.error
 import urllib.request
 
 from backend import config
@@ -83,14 +84,34 @@ def ollama_ready() -> bool:
         return False
 
 
-def generate(prompt: str, timeout: float) -> str | None:
-    """Ask Qwen (via local Ollama) for text. Returns None if slow or failing,
-    so callers use their pre-written fallback.
+def generate(prompt: str, timeout: float) -> dict | None:
+    """Ask Qwen (via local Ollama) for a JSON response.
 
-    TODO [BACKEND]: implement with POST {OLLAMA_URL}/api/generate
-      body: {"model": OLLAMA_MODEL, "prompt": prompt, "stream": false,
-             "format": "json", "keep_alive": "30m"}
-    Use `timeout`; on timeout or bad JSON return None. Used for quiz
-    questions, answer judging, practice sentences and pupil tips.
+    Returns the parsed dict on success, or None if Ollama is unavailable,
+    too slow, or returns invalid JSON — callers must handle None with a fallback.
+
+    Ollama is asked for JSON output (format="json") so responses are always
+    structured. The prompt must instruct Qwen on the exact JSON shape expected.
+    keep_alive="30m" keeps the model in memory between requests so the first
+    call after startup is the only slow one.
     """
-    return None
+    body = json.dumps({
+        "model": config.OLLAMA_MODEL,
+        "prompt": prompt,
+        "stream": False,
+        "format": "json",
+        "keep_alive": "30m",
+    }).encode()
+    req = urllib.request.Request(
+        f"{config.OLLAMA_URL}/api/generate",
+        data=body,
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            outer = json.load(resp)
+        return json.loads(outer["response"])
+    except Exception:
+        log.debug("generate() failed or timed out; caller will use fallback", exc_info=True)
+        return None

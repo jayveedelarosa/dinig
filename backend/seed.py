@@ -4,7 +4,7 @@ Run from the project folder:
     venv\\Scripts\\python.exe backend\\seed.py
 
 All pupils and results here are made-up sample data (the app labels them
-"Sample class"). The stories are PLACEHOLDERS: the team replaces the text.
+"Sample class").
 """
 import random
 import sys
@@ -18,39 +18,58 @@ from backend.config import DB_PATH  # noqa: E402
 from backend.text_utils import normalize, story_tokens  # noqa: E402
 from backend.tips import rule_based_tip  # noqa: E402
 
-P = "[PLACEHOLDER STORY: replace with real story] "
-
 STORIES = [
     {
+        # ~52 words. Harder words: bridge, careful, narrow, current.
         "title": "The Boat on the River",
-        "text": P + "Lito has a small boat. Every morning he rows across the river to school. "
-                "The water is calm and clear. One day it rained hard and the river was fast. "
-                "Lito was careful. He tied his boat under the bridge and walked home with his friend Nena.",
+        "text": (
+            "Lito has a small boat. Every morning he rows across the river to school. "
+            "The water is calm and clear. One day it rained hard and the current was strong. "
+            "The bridge was narrow and slippery. Lito was careful. "
+            "He tied his boat to a post and waited with his friend Nena "
+            "until the rain stopped and the river was calm again."
+        ),
         "questions": [
-            ("Where does Lito go every morning?", "He rows to school."),
-            ("Why did Lito tie his boat under the bridge?", "Because it rained and the river was fast."),
+            ("Why did Lito tie his boat to a post?",
+             "Because it rained and the current was strong."),
+            ("What was narrow and slippery?",
+             "The bridge."),
         ],
     },
     {
+        # ~54 words. Harder words: branch, shade, climbed, careful, shared.
         "title": "The Mango Tree",
-        "text": P + "Behind the school there is a big mango tree. The children like to sit in its shade. "
-                "In April the mangoes turn yellow and sweet. Mila climbed the tree to pick one, "
-                "but the branch was weak. Her teacher said, \"Please come down slowly.\" "
-                "Mila shared the mango with her classmates.",
+        "text": (
+            "Behind the school there is a big mango tree. "
+            "The children like to sit in its shade after lunch. "
+            "In summer the mangoes turn yellow and sweet. "
+            "Ana climbed the tree to pick one, but the branch bent under her feet. "
+            "Her teacher called, \"Please come down carefully.\" "
+            "Ana came down and shared the mango with her friends."
+        ),
         "questions": [
-            ("What color do the mangoes turn in April?", "Yellow."),
-            ("Why did the teacher ask Mila to come down?", "Because the branch was weak."),
+            ("Why did the teacher ask Ana to come down?",
+             "Because the branch bent under her feet."),
+            ("What did Ana do with the mango?",
+             "She shared it with her friends."),
         ],
     },
     {
+        # ~53 words. Harder words: carabao, harvest, thunder, shelter.
         "title": "Rain on the Farm",
-        "text": P + "Tatay works on the farm with his carabao. The carabao pulls the plow through the mud. "
-                "One afternoon dark clouds filled the sky. Thunder was loud and the rain came down. "
-                "Ben helped his father bring the carabao into the shed. "
-                "They drank warm salabat and waited for the sun.",
+        "text": (
+            "Tatay works on the farm with his carabao. "
+            "The carabao helps pull the plow before the harvest. "
+            "One afternoon dark clouds filled the sky. "
+            "Thunder rumbled and the rain came down fast. "
+            "Ben ran to help his father lead the carabao to shelter. "
+            "They sat inside and drank warm salabat while they waited for the sun."
+        ),
         "questions": [
-            ("What animal works on the farm with Tatay?", "A carabao."),
-            ("What did Ben and his father do when the rain came?", "They brought the carabao into the shed."),
+            ("What does the carabao help Tatay do on the farm?",
+             "It helps pull the plow."),
+            ("Where did Ben and his father bring the carabao when it rained?",
+             "To the shelter."),
         ],
     },
 ]
@@ -123,7 +142,7 @@ def seed() -> None:
 
         conn.execute("INSERT INTO pupils (first_name, grade) VALUES (?, ?)", DEMO_PUPIL)
 
-    print(f"Seeded {DB_PATH}: {len(STORIES)} placeholder stories, {len(PUPILS)} sample pupils + demo pupil Mika.")
+    print(f"Seeded {DB_PATH}: {len(STORIES)} stories, {len(PUPILS)} sample pupils + demo pupil Mika.")
 
 
 if __name__ == "__main__":

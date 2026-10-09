@@ -12,7 +12,7 @@ from contextlib import asynccontextmanager
 from datetime import datetime
 from pathlib import Path
 
-from fastapi import FastAPI, File, Form, HTTPException, UploadFile
+from fastapi import BackgroundTasks, FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
@@ -124,8 +124,27 @@ def _delete(*paths) -> None:
             Path(p).unlink(missing_ok=True)
 
 
+def _ai_tip_task(pupil_id: int, missed_words: list[str]) -> None:
+    """Background task: ask Qwen for a one-sentence teacher tip and save it.
+    If Qwen is unavailable the rule-based tip written before this task runs stays."""
+    unique = list(dict.fromkeys(w for w in missed_words if w))[:5]
+    if not unique:
+        return  # rule-based tip ("Great reading!") is already correct
+    prompt = (
+        f"A Grade 3 pupil struggled with these words: {', '.join(unique)}. "
+        "Write one short, encouraging tip for their teacher in plain English. "
+        'Return JSON: {"tip": "..."}'
+    )
+    result = local_models.generate(prompt, timeout=config.QUIZ_TIMEOUT_SECONDS)
+    tip = result.get("tip", "").strip() if result else ""
+    if tip:
+        with db.connect() as conn:
+            conn.execute("UPDATE pupils SET latest_tip = ? WHERE id = ?", (tip, pupil_id))
+
+
 @app.post("/readings")
 def create_reading(
+    background_tasks: BackgroundTasks,
     pupil_id: int = Form(...),
     story_id: int = Form(...),
     seconds_taken: float = Form(...),
@@ -163,8 +182,9 @@ def create_reading(
         reading_id = cur.lastrowid
         conn.execute("UPDATE pupils SET latest_tip = ? WHERE id = ?",
                      (rule_based_tip(s["red_words"] + s["skipped_words"]), pupil_id))
-    # TODO [BACKEND]: start the AI tip in a BackgroundTasks job (local_models.generate);
-    # it replaces the rule-based tip when ready.
+    # Replace the rule-based tip with an AI-generated one in the background so
+    # the reading result returns immediately while Qwen thinks.
+    background_tasks.add_task(_ai_tip_task, pupil_id, s["red_words"] + s["skipped_words"])
 
     return {"reading_id": reading_id, "words": words, "words_correct": s["words_correct"],
             "total_words": s["total_words"], "seconds_taken": seconds}
@@ -196,8 +216,27 @@ def get_quiz(reading_id: int):
             raise HTTPException(404, "Reading not found")
         rows = conn.execute("SELECT id, question FROM questions WHERE story_id = ? ORDER BY id LIMIT 2",
                             (reading["story_id"],)).fetchall()
-    # TODO [BACKEND]: ask Qwen for 2 questions via local_models.generate(prompt, config.QUIZ_TIMEOUT_SECONDS);
-    # return {"source": "ai", ...} and fall back to these backup questions when it returns None.
+        story_row = conn.execute(
+            "SELECT full_text FROM stories WHERE id = ?", (reading["story_id"],)
+        ).fetchone()
+    # Ask Qwen for 2 questions; fall back to pre-written backup questions if it
+    # is slow or unavailable. QUIZ_TIMEOUT_SECONDS (default 8s) keeps the pupil waiting.
+    story_text = clean_story(story_row["full_text"])
+    prompt = (
+        f"Read this story and write 2 comprehension questions for a Grade 3 pupil.\n"
+        f"Story: {story_text}\n"
+        'Return JSON: {"questions": [{"question": "...", "answer": "..."}, {"question": "...", "answer": "..."}]}'
+    )
+    ai = local_models.generate(prompt, timeout=config.QUIZ_TIMEOUT_SECONDS)
+    if ai and isinstance(ai.get("questions"), list) and len(ai["questions"]) >= 1:
+        questions = [
+            {"question_id": None, "question": q["question"]}
+            for q in ai["questions"][:2]
+            if q.get("question")
+        ]
+        if questions:
+            return {"source": "ai", "questions": questions}
+    # fallback: pre-written backup questions from the DB
     return {"source": "backup", "questions": [{"question_id": r["id"], "question": r["question"]} for r in rows]}
 
 
@@ -228,12 +267,32 @@ def quiz_answer(
     finally:
         _delete(webm, wav)
 
-    # TODO [BACKEND]: judge with Qwen (story text + question + heard answer) via local_models.generate();
-    # keep this keyword match as the fallback when Qwen is slow or off.
-    if backup:
-        result = "right" if _keyword_match(backup["answer"], heard) else "wrong"
-    else:
-        result = "unchecked"
+    # Ask Qwen to judge the answer; fall back to keyword match when Qwen is slow or off.
+    judged = False
+    if local_models.ollama_ready():
+        with db.connect() as conn2:
+            story_row = conn2.execute(
+                "SELECT s.full_text FROM stories s JOIN readings r ON r.story_id = s.id WHERE r.id = ?",
+                (reading_id,)
+            ).fetchone()
+        if story_row:
+            judge_prompt = (
+                f"Story: {clean_story(story_row['full_text'])}\n"
+                f"Question: {question}\n"
+                f"Pupil said: {heard}\n"
+                "Is the pupil's answer correct? "
+                'Return JSON: {"result": "right" or "wrong"}'
+            )
+            ai = local_models.generate(judge_prompt, timeout=config.QUIZ_TIMEOUT_SECONDS)
+            if ai and ai.get("result") in ("right", "wrong"):
+                result = ai["result"]
+                judged = True
+    if not judged:
+        # fallback: keyword match against the pre-written backup answer
+        if backup:
+            result = "right" if _keyword_match(backup["answer"], heard) else "wrong"
+        else:
+            result = "unchecked"
     with db.connect() as conn:  # privacy: only the result is saved, never what the child said
         conn.execute("INSERT INTO quiz_answers (reading_id, question, result) VALUES (?, ?, ?)",
                      (reading_id, question, result))
@@ -253,9 +312,20 @@ def create_practice(req: PracticeRequest):
         if not reading:
             raise HTTPException(404, "Reading not found")
         targets = list(dict.fromkeys(db.from_json(reading["red_words"])))[:3]
-        # TODO [BACKEND]: ask Qwen for 2-3 short, easy sentences using the target words
-        # (local_models.generate); keep these templates as the fallback.
-        sentences = [f"I can read the word {w}." for w in targets]
+        # Ask Qwen for natural practice sentences using the missed words.
+        # Fall back to simple templates when Qwen is unavailable.
+        ai_sentences = None
+        if targets:
+            prompt = (
+                f"Write 2 short, easy sentences for a Grade 3 Filipino pupil. "
+                f"Each sentence must use one of these words: {', '.join(targets)}. "
+                "Use simple English. "
+                'Return JSON: {"sentences": ["...", "..."]}'
+            )
+            ai = local_models.generate(prompt, timeout=config.QUIZ_TIMEOUT_SECONDS)
+            if ai and isinstance(ai.get("sentences"), list) and len(ai["sentences"]) >= 1:
+                ai_sentences = [s for s in ai["sentences"] if isinstance(s, str) and s.strip()]
+        sentences = ai_sentences if ai_sentences else [f"I can read the word {w}." for w in targets]
         cur = conn.execute("INSERT INTO practice (reading_id, sentences, wrong_before) VALUES (?, ?, ?)",
                            (req.reading_id, db.to_json(sentences), len(targets)))
     return {"practice_id": cur.lastrowid, "sentences": sentences, "target_words": targets,
