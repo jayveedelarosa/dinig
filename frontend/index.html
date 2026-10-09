@@ -6,7 +6,6 @@
   <title>Dinig</title>
   <link rel="icon" href="data:,">
   <!-- TODO [FRONTEND]: real Dinig icon (designer) -->
-  <!-- TODO [FRONTEND]: My Result must fit 1366x768 without scrolling (Next button is below the fold now). -->
   <!-- TODO [FRONTEND]: Pick Your Name with 40 pupils: smaller tiles or class numbers so the class fits one screen. -->
   <!-- TODO [FRONTEND]: Class View heatmap: put the "–" blanks on the left (oldest side) so the newest reading is always the last cell. -->
   <!-- TODO [FRONTEND]: Story Quiz screen is very bare; show the story title or picture (designer screens). -->
@@ -14,6 +13,19 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body class="pupil">
+
+  <!-- Icon sprite (stroke icons from the designer's prototype). Use: <svg class="icon"><use href="#i-mic"/></svg> -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
+    <symbol id="i-book" viewBox="0 0 24 24"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H11v16H6.5A2.5 2.5 0 0 0 4 21.5z"/><path d="M20 5.5A2.5 2.5 0 0 0 17.5 3H13v16h4.5a2.5 2.5 0 0 1 2.5 2.5z"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></symbol>
+    <symbol id="i-class" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6M15 15c3 0 5 2.2 5 5"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+    <symbol id="i-home" viewBox="0 0 24 24"><path d="m3 11 9-8 9 8"/><path d="M5 10v11h14V10M9 21v-6h6v6"/></symbol>
+    <symbol id="i-mic" viewBox="0 0 24 24"><rect x="8" y="3" width="8" height="12" rx="4"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></symbol>
+    <symbol id="i-sparkles" viewBox="0 0 24 24"><path d="m12 3 1.2 3.8L17 8l-3.8 1.2L12 13l-1.2-3.8L7 8l3.8-1.2z"/><path d="m19 14 .7 2.3L22 17l-2.3.7L19 20l-.7-2.3L16 17l2.3-.7z"/></symbol>
+    <symbol id="i-theme" viewBox="0 0 24 24"><path d="M20 15.5A8 8 0 0 1 8.5 4 8 8 0 1 0 20 15.5z"/><path d="M17 3v2M21 7h-2M18.5 5.5 20 4"/></symbol>
+  </svg>
 
   <!-- Home (both modes) -->
   <section id="home" class="screen active">
@@ -46,39 +58,69 @@
 
   <!-- Read Aloud (pupil) -->
   <section id="read-aloud" class="screen">
-    <header class="bar"><button class="btn btn-back" id="read-back">Back</button><h2 id="story-title"></h2></header>
-    <p id="placeholder-note" class="note hidden">Placeholder story: the team will replace this text.</p>
-    <div id="story-text" class="story"></div>
-    <div class="read-controls">
-      <div id="listening" class="listening hidden"><span class="mic-pulse"></span> I'm listening...</div>
-      <div id="timer" class="timer">0:00</div>
-      <button id="read-btn" class="btn btn-big">Start</button>
+    <div class="reader-layout">
+      <article class="reading-card">
+        <div class="reading-meta">
+          <span class="reading-title">
+            <button class="button button-quiet button-small" id="read-back">Back</button>
+            <svg class="icon icon-sm"><use href="#i-book"/></svg><span id="story-title"></span>
+          </span>
+          <span class="reading-timer"><svg class="icon icon-sm"><use href="#i-clock"/></svg><span id="timer">0:00</span></span>
+        </div>
+        <p id="placeholder-note" class="note hidden">Placeholder story: the team will replace this text.</p>
+        <div id="story-text" class="reading-passage"></div>
+        <div class="reading-help">
+          <svg class="icon"><use href="#i-mic"/></svg>
+          <span>
+            <strong><span id="listening" class="listening hidden"><span class="mic-pulse"></span>Dindin is listening...</span><span class="ready-text">Ready, <span class="pupil-name"></span>?</span></strong>
+            <small>Your voice stays on this laptop and is deleted after checking.</small>
+          </span>
+        </div>
+        <p id="mic-error" class="note hidden"></p>
+      </article>
+      <aside class="reader-buddy">
+        <div class="dindin-expression dindin-reading" role="img" aria-label="Dindin is ready to listen"></div>
+        <div class="reader-prompt"><strong>Read when you're ready.</strong><span>Tap Start, read the whole story out loud, then tap Done.</span></div>
+        <button id="read-btn" class="button button-blue button-big mic-button read-action">Start</button>
+      </aside>
     </div>
-    <p id="mic-error" class="note hidden"></p>
   </section>
 
   <!-- Checking (pupil) -->
   <section id="checking" class="screen">
-    <div class="center">
-      <div class="spinner"></div>
-      <p class="big-text">Listening to your reading...</p>
+    <div class="center-stage">
+      <div class="checking-mascot"><div class="dindin-expression dindin-thinking" role="img" aria-label="Dindin is thinking"></div></div>
+      <span class="loading-dots"><i></i><i></i><i></i></span>
+      <h1>Listening to your reading...</h1>
+      <p>Dindin is checking every word you read.</p>
+      <div class="privacy-chip"><svg class="icon icon-sm"><use href="#i-check"/></svg>Everything stays on this laptop</div>
     </div>
   </section>
 
   <!-- My Result (pupil) -->
   <section id="my-result" class="screen">
-    <header class="bar"><h2 id="result-message">Great reading!</h2></header>
-    <div class="score-row">
-      <div class="score" id="result-score"></div>
-      <div class="time" id="result-time"></div>
+    <div class="result-page">
+      <div class="result-heading">
+        <div>
+          <span class="eyebrow">My Result</span>
+          <h1 id="result-score"></h1>
+          <p id="result-message">Great reading!</p>
+        </div>
+        <div class="time-card"><svg class="icon"><use href="#i-clock"/></svg><span><small>Reading time</small><strong id="result-time"></strong></span></div>
+      </div>
+      <article class="word-result-card">
+        <ul class="word-legend">
+          <li><span class="w w-green">word</span> Correct</li>
+          <li><span class="w w-red">word</span> Practice word</li>
+          <li><span class="w w-grey">word</span> Skipped</li>
+        </ul>
+        <div id="result-words" class="marked-passage"></div>
+      </article>
+      <div class="result-footer">
+        <div class="dindin-mini"><div class="dindin-expression dindin-encouraging" role="img" aria-label="Dindin is cheering you on"></div><span><strong>You kept going!</strong><small>Next, a short story quiz.</small></span></div>
+        <button class="button button-primary button-big" id="result-next">Start story quiz <svg class="icon"><use href="#i-arrow"/></svg></button>
+      </div>
     </div>
-    <div id="result-words" class="story result"></div>
-    <ul class="legend">
-      <li><span class="w w-green">word</span> ✓ correct</li>
-      <li><span class="w w-red">word</span> practice word</li>
-      <li><span class="w w-grey">word</span> skipped</li>
-    </ul>
-    <div class="actions"><button class="btn btn-big" id="result-next">Next</button></div>
   </section>
 
   <!-- Story Quiz (pupil) -->

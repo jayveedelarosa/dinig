@@ -24,3 +24,6 @@ temp/
 prompts.txt
 # Logs
 *.log
+
+# Designer's Figma Make prototype (reference only)
+design-ref/

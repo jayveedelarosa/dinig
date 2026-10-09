@@ -1,40 +1,233 @@
-/* Dinig styles. Colors and fonts from docs/BRAND.md. Fonts are bundled in /fonts/ (offline). */
+/* Dinig styles. Look ported from the designer's Figma Make prototype (plain CSS, no Tailwind).
+   Everything is offline: fonts are bundled in /fonts/, images in /assets/. */
 
+@font-face { font-family: "Nunito"; src: url("fonts/Nunito-Variable.ttf") format("truetype"); font-weight: 200 1000; }
 @font-face { font-family: "Andika"; src: url("fonts/Andika-Regular.ttf") format("truetype"); font-weight: 400; }
 @font-face { font-family: "Andika"; src: url("fonts/Andika-Bold.ttf") format("truetype"); font-weight: 700; }
 @font-face { font-family: "Atkinson Hyperlegible"; src: url("fonts/AtkinsonHyperlegible-Regular.ttf") format("truetype"); font-weight: 400; }
 @font-face { font-family: "Atkinson Hyperlegible"; src: url("fonts/AtkinsonHyperlegible-Bold.ttf") format("truetype"); font-weight: 700; }
 
+/* ---------- Design tokens (from the prototype) ---------- */
+
 :root {
+  --green: #00a460;
+  --green-dark: #008750;
+  --green-soft: #e9f8f1;
+  --blue: #1cb0f6;
+  --blue-dark: #138bc4;
+  --blue-soft: #eaf7fe;
+  --yellow: #ffc800;
+  --yellow-soft: #fff7d5;
+  --red: #ff4b4b;
+  --ink: #303a36;
+  --muted: #61706a;
+  --subtle: #8a9792;
+  --line: #dce7e2;
+  --surface: #ffffff;
+  --canvas: #f6f9f7;
+  --navy: #263b63;
+  --shadow: 0 12px 36px rgba(37, 65, 54, .08);
+
+  /* Fonts: Nunito for headings and buttons, Andika for story text (simple a/g for new readers),
+     Atkinson Hyperlegible for small body and table text. */
+  --font-head: "Nunito", "Atkinson Hyperlegible", sans-serif;
+  --font-body: "Atkinson Hyperlegible", sans-serif;
+  --font-story: "Andika", sans-serif;
+
+  --topbar-h: 0px;
+
+  /* Old tokens, still used by screens not restyled yet */
   --primary: #1E4E8C;
   --accent: #F2B705;
-  --bg-pupil: #FFF8EC;
-  --bg-teacher: #F7F8FA;
   --text: #1F2933;
-  --muted: #4B5563;
   --card: #FFFFFF;
   --border: #D9DEE5;
-
-  /* Word results (color is never the only cue) */
   --green-text: #0B5D45; --green-bg: #D1F0E4;
   --red-text: #9A3A00;   --red-bg: #FDE0CC;
   --grey-text: #4B5563;  --grey-bg: #E5E7EB;
-  /* Heatmap only: amber for 75-89% (grey means "skipped") */
   --amber-text: #7A5200; --amber-bg: #FCEFC7;
 }
 
+/* Dark mode: only when the toggle adds .theme-dark to <html>. Light is always the start. */
+.theme-dark {
+  --green: #26c982;
+  --green-dark: #72dfad;
+  --green-soft: #153b2d;
+  --blue: #38b9f7;
+  --blue-dark: #7bd2fa;
+  --blue-soft: #163747;
+  --yellow: #ffd43b;
+  --yellow-soft: #3d3618;
+  --red: #ff7171;
+  --ink: #f7fcf9;
+  --muted: #c7d3ce;
+  --subtle: #a8b8b2;
+  --line: #34453f;
+  --surface: #18231f;
+  --canvas: #101815;
+  --navy: #2c426f;
+  --shadow: 0 12px 36px rgba(0, 0, 0, .25);
+  color-scheme: dark;
+}
+
+/* ---------- Base ---------- */
+
 * { box-sizing: border-box; }
-html, body { margin: 0; height: 100%; }
-body { color: var(--text); }
-body.pupil { background: var(--bg-pupil); font-family: "Andika", sans-serif; font-size: 22px; }
-body.teacher { background: var(--bg-teacher); font-family: "Atkinson Hyperlegible", sans-serif; font-size: 16px; }
+html, body { min-width: 1024px; margin: 0; min-height: 100%; }
+body { background: var(--canvas); color: var(--ink); font-family: var(--font-body); font-size: 15px; -webkit-font-smoothing: antialiased; }
+button { color: inherit; font: inherit; }
+button:focus-visible, select:focus-visible, input:focus-visible { outline: 3px solid rgba(28, 176, 246, .45); outline-offset: 3px; }
 
 .hidden { display: none !important; }
 .muted { color: var(--muted); }
-.small { font-size: 0.85em; }
 
 .screen { display: none; min-height: 100vh; padding: 24px 32px; }
 .screen.active { display: block; }
+/* Restyled screens own their full layout */
+#read-aloud, #checking, #my-result { padding: 0; }
+
+/* Icons: inline SVG <use href="#i-..."> from the sprite at the top of index.html */
+.icon { display: block; flex: 0 0 auto; width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.icon-sm { width: 18px; height: 18px; }
+
+/* ---------- Buttons ---------- */
+
+.button { display: inline-flex; min-height: 52px; align-items: center; justify-content: center; gap: 10px; padding: 12px 22px; border: 2px solid transparent; border-radius: 16px; cursor: pointer; font-family: var(--font-head); font-size: 16px; font-weight: 900; transition: transform 150ms ease, box-shadow 150ms ease; }
+.button:hover { transform: translateY(-2px); }
+.button:active { box-shadow: none; transform: translateY(3px); }
+.button:disabled { cursor: default; opacity: .6; transform: none; }
+.button-primary { background: var(--green); box-shadow: 0 5px 0 #007b48; color: white; }
+.button-blue { background: var(--blue); box-shadow: 0 5px 0 var(--blue-dark); color: white; }
+.button-yellow { background: var(--yellow); box-shadow: 0 5px 0 #d8a900; color: #5d4a00; }
+.button-quiet { border-color: var(--line); background: white; box-shadow: 0 4px 0 #d1dcd7; color: var(--muted); }
+.button-small { min-height: 40px; padding: 7px 14px; border-radius: 12px; font-size: 14px; box-shadow: 0 3px 0 #d1dcd7; }
+/* Main pupil action: at least 72px tall (docs/BRAND.md) */
+.button-big { min-height: 72px; padding: 14px 30px; border-radius: 20px; font-size: 20px; }
+
+/* Mic buttons: JS replaces their text ("Start" / "Done" / "Checking..."), so the icon is drawn by CSS, not a child element. */
+.mic-button::before { content: ""; width: 24px; height: 24px; background: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='8' y='3' width='8' height='12' rx='4'/%3E%3Cpath d='M5 11a7 7 0 0 0 14 0M12 18v3'/%3E%3C/svg%3E") center / contain no-repeat;
+          mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='8' y='3' width='8' height='12' rx='4'/%3E%3Cpath d='M5 11a7 7 0 0 0 14 0M12 18v3'/%3E%3C/svg%3E") center / contain no-repeat; }
+/* While recording, the button becomes the green "Done" button with a check mark */
+.mic-button.recording { background: var(--green); box-shadow: 0 5px 0 #007b48; }
+.mic-button.recording::before {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m5 12 4 4L19 6'/%3E%3C/svg%3E");
+          mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m5 12 4 4L19 6'/%3E%3C/svg%3E"); }
+.mic-button:disabled::before { display: none; }
+
+/* ---------- Shared bits ---------- */
+
+.eyebrow { display: inline-flex; align-items: center; gap: 7px; color: var(--green-dark); font-family: var(--font-head); font-size: 14px; font-weight: 900; letter-spacing: .035em; text-transform: uppercase; }
+.note { display: inline-block; margin: 0; padding: 6px 12px; border-radius: 10px; background: var(--yellow-soft); color: #6b5500; font-size: 14px; font-weight: 700; }
+
+/* "Dindin is listening" with a pulsing dot */
+.listening { display: inline-flex; align-items: center; gap: 9px; color: var(--blue-dark); font-weight: 700; }
+.mic-pulse { width: 12px; height: 12px; border-radius: 50%; background: var(--blue); animation: pulse 1s infinite; }
+@keyframes pulse { 50% { transform: scale(1.5); opacity: .5; } }
+
+/* Dindin mascot: one sprite sheet, 3 columns x 4 rows of expressions.
+   (Our copy has a transparent background, so it works on any color and in dark mode.) */
+.dindin-expression { width: 270px; aspect-ratio: 1; background-image: url("assets/mascot/dindin-expression-grid.png"); background-repeat: no-repeat; background-size: 300% 400%; animation: expression-in 420ms cubic-bezier(.2,.85,.35,1) both, expression-idle 3.8s ease-in-out 500ms infinite; transform-origin: 50% 90%; }
+.dindin-encouraging { background-position: 50% 0; }
+.dindin-waving { background-position: 0 66.666%; }
+.dindin-celebrating { background-position: 50% 66.666%; }
+.dindin-thinking { background-position: 100% 66.666%; }
+.dindin-retry { background-position: 0 100%; }
+.dindin-reading { background-position: 50% 100%; }
+@keyframes expression-in { from { opacity: 0; transform: translateY(14px) scale(.94); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@keyframes expression-idle { 0%,100% { transform: translateY(0) rotate(-.5deg); } 50% { transform: translateY(-6px) rotate(.5deg); } }
+@media (prefers-reduced-motion: reduce) { .dindin-expression, .loading-dots i, .mic-pulse { animation: none !important; } }
+
+/* ---------- Word results (My Result and Practice Again) ----------
+   Color is never the only cue: practice words get a wavy underline, skipped words a dashed outline. */
+
+.w { padding: 0 5px 2px; border-radius: 6px; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
+.w-green { background: #e2f6ed; box-shadow: inset 0 -3px 0 #79cba6; color: #1d5a40; }
+.w-red { background: #fff4c4; color: #5c4a00; text-decoration: underline wavy #b38600; text-decoration-thickness: 2px; text-underline-offset: 7px; }
+.w-grey { background: #eef1f0; color: #5f6b66; outline: 2px dashed #8a9792; outline-offset: -2px; }
+
+/* ---------- Read Aloud ---------- */
+
+.reader-layout { display: grid; width: min(1180px, calc(100% - 72px)); height: calc(100vh - var(--topbar-h)); grid-template-columns: minmax(0, 1fr) 330px; gap: 22px; margin: 0 auto; padding: 26px 0; }
+.reading-card { display: flex; min-height: 0; flex-direction: column; padding: 26px 40px; border: 2px solid var(--line); border-radius: 24px; background: white; box-shadow: var(--shadow); }
+.reading-meta { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-bottom: 16px; border-bottom: 1px solid var(--line); color: var(--muted); font-size: 15px; }
+.reading-meta > span { display: flex; align-items: center; gap: 9px; }
+.reading-title { min-width: 0; color: var(--green-dark); font-family: var(--font-head); font-size: 18px; font-weight: 900; }
+.reading-timer { font-family: var(--font-head); font-size: 20px; font-weight: 800; font-variant-numeric: tabular-nums; }
+#placeholder-note { align-self: flex-start; margin-top: 14px; }
+/* Story text: large Andika, scrolls inside the card if a story is long */
+.reading-passage { flex: 1; min-height: 0; overflow-y: auto; margin: 18px 0; font-family: var(--font-story); font-size: 32px; line-height: 1.8; }
+.reading-help { display: flex; align-items: center; gap: 12px; padding-top: 16px; border-top: 1px solid var(--line); color: var(--blue-dark); }
+.reading-help > span { display: grid; gap: 2px; }
+.reading-help strong { font-size: 16px; }
+.reading-help small { color: var(--muted); font-size: 14px; }
+/* "Ready, Mika?" shows until the mic starts, then "Dindin is listening" replaces it */
+#listening:not(.hidden) + .ready-text { display: none; }
+#mic-error { margin-top: 12px; align-self: flex-start; }
+.reader-buddy { display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; padding: 20px; border: 2px solid #cce9dc; border-radius: 24px; background: linear-gradient(180deg, #eaf9f2, #fff8d9); }
+.reader-buddy .dindin-expression { width: 250px; }
+.reader-prompt { display: grid; width: 100%; gap: 4px; padding: 14px; border: 1px solid #c9dfd5; border-radius: 14px; background: rgba(255,255,255,.9); text-align: center; }
+.reader-prompt strong { font-family: var(--font-head); font-size: 18px; }
+.reader-prompt span { color: var(--muted); font-size: 14px; line-height: 1.45; }
+.read-action { width: 100%; margin-top: 18px; }
+
+/* ---------- Checking ---------- */
+
+.center-stage { display: flex; min-height: calc(100vh - var(--topbar-h)); flex-direction: column; align-items: center; justify-content: center; padding: 30px; text-align: center; }
+.checking-mascot { width: 280px; height: 250px; overflow: hidden; }
+.loading-dots { display: flex; gap: 8px; margin: 18px 0 22px; }
+.loading-dots i { width: 12px; height: 12px; border-radius: 50%; background: var(--green); animation: bounce 900ms ease-in-out infinite; }
+.loading-dots i:nth-child(2) { animation-delay: 150ms; }
+.loading-dots i:nth-child(3) { animation-delay: 300ms; }
+@keyframes bounce { 50% { transform: translateY(-8px); opacity: .45; } }
+.center-stage h1 { margin: 0; font-family: var(--font-head); font-size: 42px; font-weight: 900; letter-spacing: -.03em; }
+.center-stage > p { max-width: 520px; margin: 10px 0 20px; color: var(--muted); font-size: 17px; }
+.privacy-chip { display: flex; align-items: center; gap: 8px; padding: 9px 15px; border-radius: 99px; background: var(--green-soft); color: var(--green-dark); font-size: 14px; font-weight: 700; }
+
+/* ---------- My Result ----------
+   One viewport tall: the word card scrolls if needed, so the quiz button is always on screen. */
+
+.result-page { display: flex; width: min(1120px, calc(100% - 72px)); height: calc(100vh - var(--topbar-h)); flex-direction: column; margin: 0 auto; padding: 26px 0 22px; }
+.result-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 30px; }
+.result-heading h1 { margin: 8px 0 6px; font-family: var(--font-head); font-size: 40px; font-weight: 900; letter-spacing: -.03em; line-height: 1.05; }
+.result-heading p { margin: 0; color: var(--muted); font-size: 18px; }
+.time-card { display: flex; align-items: center; gap: 11px; padding: 12px 18px; border: 2px solid var(--line); border-radius: 15px; background: white; color: var(--blue-dark); }
+.time-card > span { display: grid; }
+.time-card small { color: var(--muted); font-size: 13px; }
+.time-card strong { margin-top: 2px; font-family: var(--font-head); font-size: 22px; font-variant-numeric: tabular-nums; }
+.word-result-card { display: flex; min-height: 0; flex: 1; flex-direction: column; margin-top: 18px; padding: 20px 32px; border: 2px solid var(--line); border-radius: 23px; background: white; box-shadow: var(--shadow); }
+.word-legend { display: flex; gap: 26px; margin: 0; padding: 0 0 14px; border-bottom: 1px solid var(--line); color: var(--muted); font-size: 14px; font-weight: 700; list-style: none; }
+.word-legend li { display: flex; align-items: center; gap: 8px; }
+.word-legend .w { font-family: var(--font-story); font-size: 15px; }
+.marked-passage { flex: 1; min-height: 0; overflow-y: auto; margin-top: 14px; font-family: var(--font-story); font-size: 30px; line-height: 1.95; }
+.result-footer { display: flex; align-items: center; justify-content: space-between; margin-top: 16px; }
+.dindin-mini { display: flex; align-items: center; gap: 6px; }
+.dindin-mini .dindin-expression { width: 86px; }
+.dindin-mini > span { display: grid; gap: 2px; }
+.dindin-mini strong { font-family: var(--font-head); font-size: 18px; }
+.dindin-mini small { color: var(--muted); font-size: 14px; }
+
+/* ---------- Dark mode overrides (explicit; light stays the default) ---------- */
+
+.theme-dark .reading-card,
+.theme-dark .word-result-card,
+.theme-dark .time-card,
+.theme-dark .reader-prompt { background: var(--surface); }
+.theme-dark .button-quiet { border-color: var(--line); background: #202d28; box-shadow: 0 4px 0 #0c1210; color: var(--ink); }
+.theme-dark .reader-buddy { border-color: #344f43; background: linear-gradient(145deg, #172a22, #1a3027 56%, #393217); }
+.theme-dark .reading-passage { color: var(--ink); }
+.theme-dark .note { color: #fff3ac; }
+.theme-dark .w-green { background: #174b36; box-shadow: inset 0 -3px 0 #65d19f; color: #e8fff4; }
+.theme-dark .w-red { background: #544716; color: #fff3ac; text-decoration-color: #ffd43b; }
+.theme-dark .w-grey { background: #36413d; color: #e1e8e5; outline-color: #9daba5; }
+
+/* ================================================================
+   Old styles: screens not restyled yet (removed group by group)
+   ================================================================ */
+
+body.pupil .screen:not(#read-aloud):not(#checking):not(#my-result) { font-family: "Andika", sans-serif; font-size: 22px; }
+body.teacher .screen { font-family: "Atkinson Hyperlegible", sans-serif; font-size: 16px; }
+.small { font-size: 0.85em; }
 
 /* Header bar */
 .bar { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; flex-wrap: wrap; }
@@ -49,7 +242,6 @@ body.teacher { background: var(--bg-teacher); font-family: "Atkinson Hyperlegibl
 .btn-secondary { background: var(--card); color: var(--primary); border: 3px solid var(--primary); }
 .btn-back { background: transparent; color: var(--primary); border: 2px solid var(--primary); min-height: 48px; }
 .btn-small { padding: 6px 14px; }
-/* TODO [FRONTEND]: the recording "Done" button uses the practice-word red; pick a calmer recording color with the designer. */
 .btn.recording { background: var(--red-text); }
 
 /* Home */
@@ -70,31 +262,11 @@ body.teacher { background: var(--bg-teacher); font-family: "Atkinson Hyperlegibl
 .tile:hover, .tile:focus-visible { border-color: var(--primary); outline: none; }
 .tile .sub { display: block; font-size: 0.6em; font-weight: 400; color: var(--muted); margin-top: 6px; }
 
-/* Story text: 32-40px, line height 1.8 */
 .story { font-size: 36px; line-height: 1.8; background: var(--card); border-radius: 18px; padding: 24px 32px; max-width: 1100px; }
-.note { color: var(--amber-text); background: var(--amber-bg); display: inline-block; padding: 6px 12px; border-radius: 8px; font-size: 0.75em; }
-
 .read-controls { display: flex; align-items: center; gap: 24px; margin-top: 24px; flex-wrap: wrap; }
-.timer { font-size: 1.6em; font-variant-numeric: tabular-nums; min-width: 90px; }
-.listening { display: flex; align-items: center; gap: 10px; color: var(--primary); font-weight: 700; }
-.mic-pulse { width: 18px; height: 18px; border-radius: 50%; background: var(--red-text); animation: pulse 1s infinite; }
-@keyframes pulse { 50% { transform: scale(1.5); opacity: 0.5; } }
 
-/* Checking */
 .center { text-align: center; margin-top: 18vh; }
 .big-text { font-size: 1.6em; font-weight: 700; }
-.spinner { width: 80px; height: 80px; margin: 0 auto; border-radius: 50%; border: 10px solid var(--grey-bg); border-top-color: var(--primary); animation: spin 1s linear infinite; }
-@keyframes spin { to { transform: rotate(360deg); } }
-
-/* My Result: word colors + shape cues for color-blind users */
-.score-row { display: flex; gap: 32px; align-items: baseline; margin-bottom: 16px; }
-.score { font-size: 1.5em; font-weight: 700; }
-/* TODO [FRONTEND]: with every word in a green box the result is busy; try a lighter green so red/grey stand out. */
-.w { padding: 0 6px; border-radius: 6px; margin: 0 1px; }
-.w-green { color: var(--green-text); background: var(--green-bg); }
-.w-red { color: var(--red-text); background: var(--red-bg); text-decoration: underline wavy var(--red-text); text-underline-offset: 6px; }
-.w-grey { color: var(--grey-text); background: var(--grey-bg); outline: 2px dashed var(--grey-text); outline-offset: -2px; }
-.legend { list-style: none; padding: 0; display: flex; gap: 28px; flex-wrap: wrap; font-size: 0.85em; }
 .actions { margin-top: 24px; }
 
 /* Story Quiz / Practice */
@@ -110,7 +282,7 @@ body.teacher { background: var(--bg-teacher); font-family: "Atkinson Hyperlegibl
 .class-grid { overflow-x: auto; }
 .class-table { width: 100%; border-collapse: collapse; background: var(--card); }
 .class-table th, .class-table td { text-align: left; padding: 5px 10px; border-bottom: 1px solid var(--border); vertical-align: middle; }
-.class-table th { background: var(--bg-teacher); position: sticky; top: 0; }
+.class-table th { background: #F7F8FA; position: sticky; top: 0; }
 .class-table tr.newest { background: #EAF1FB; }
 .class-table tr.newest td:first-child::after { content: " NEW"; font-size: 0.7em; font-weight: 700; color: var(--primary); }
 .heat { display: flex; gap: 4px; }

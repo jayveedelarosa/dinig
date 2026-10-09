@@ -225,7 +225,7 @@ onEnter["my-result"] = () => {
   const r = state.reading;
   $("#result-message").textContent = kindMessage(r.words_correct, r.total_words);
   $("#result-score").textContent = `${r.words_correct} of ${r.total_words} words correct`;
-  $("#result-time").textContent = `Time: ${formatTime(r.seconds_taken)}`;
+  $("#result-time").textContent = formatTime(r.seconds_taken);
   const box = $("#result-words");
   box.textContent = "";
   r.words.forEach((w) => {
