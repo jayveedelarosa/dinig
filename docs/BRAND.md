@@ -2,7 +2,7 @@
 
 ## Target user behavior (most important)
 **Teacher (buyer and main user)**
-- **Where they are, internet access, device:** in a rural public school with weak or no internet, using one shared Windows laptop for 40+ pupils.
+- **Where they are, internet access, device:** in a rural public school with weak or no internet, using one shared **8GB RAM** Windows laptop (typical DepEd laptop) for 40+ pupils. No phone needed. [CHANGED]
 - **How comfortable with apps:** OPEN QUESTION, to be confirmed by a teacher interview. We assume they are comfortable with everyday apps but have little time to learn new tools. If setup takes more than a minute, they will not use it.
 - **What makes them trust an app:**
   - it works with Wi-Fi off
@@ -16,6 +16,13 @@
   - it shames a child
 - **Buying power:** about P30,000 to P35,000 a month, and the laptop belongs to the school. Dinig must be free to the teacher. Who pays is an OPEN QUESTION.
 
+**Parent (secondary user)** [CHANGED]
+- **Where they are:** at home, often with weak or no internet, using a family Windows laptop for one child.
+- **How comfortable with apps:** OPEN QUESTION. We assume they have less tech practice than teachers, so Dinig opens with one double-click and uses plain words.
+- **What makes them trust an app:** the child's voice stays on the laptop, there is no account, and no phone number is asked.
+- **What makes them leave:** anything that asks for sign-up, internet or payment.
+- **Buying power:** OPEN QUESTION. Dinig is free.
+
 **Pupil (daily user)**
 - 8 to 10 years old, Grade 3 or 4, reading below grade level in many cases.
 - Uses the laptop only on their turn. They may be shy about reading aloud, and some are not used to a touchpad. They need big targets and few words.
@@ -24,6 +31,7 @@
 ## Tone of voice (one example sentence for the pupil, one for the teacher)
 - **Pupil (warm, short, cheering):** "Great reading, Mika! Let's practice 3 words together."
 - **Teacher (plain, fast, factual):** "Mika: 47 of 50 correct, 1 min 35 s. Practice: bridge, careful."
+- **Parent (same plain tone as the teacher):** "Mika read 47 of 50 words. Practice together: bridge, careful." [CHANGED]
 - In Pupil mode, never use "wrong", "fail" or "bad". Red words are called **practice words**.
 
 ## Colors (with hex codes, including the green, red, and grey for word results, readable for color-blind users)
@@ -73,6 +81,8 @@ Check every text and background pair with a contrast checker and aim for at leas
 - Show a friendly loading animation for any wait.
 - Keep the Teacher mode table dense and sortable, so all 40 pupils fit on one screen.
 - Say "Works offline" and "Voice deleted after checking" on screen.
+- Label the adult button **Teacher / Parent**. [CHANGED]
+- Show "No internet or phone needed" on Home. [CHANGED]
 
 **Don't**
 - Don't show red X marks, sad faces or rankings in Pupil mode.
@@ -81,3 +91,4 @@ Check every text and background pair with a contrast checker and aim for at leas
 - Don't rely on color alone.
 - Don't invent stats or speed numbers anywhere in the app or pitch.
 - Don't load anything from the internet (fonts, icons, scripts).
+- Don't ask for a phone number, email or sign-up. [CHANGED]

@@ -2,10 +2,11 @@
 
 ## Tech stack (chosen for this build, one sentence why for each)
 - **Frontend: plain HTML, CSS and JavaScript** in `frontend/`, served by FastAPI. There is no build step and no npm, it works offline from the same server, and the browser's built-in MediaRecorder records the mic.
+- **Desktop launcher: `start_dinig.bat`** starts the FastAPI server and opens http://localhost:8000 in Microsoft Edge app mode (`msedge --app=...`). Dinig looks like its own window, with no tabs or address bar, and Edge is already installed on Windows. [CHANGED]
 - **Backend: Python + FastAPI.** Python is where Whisper and the audio tools live, and FastAPI is quick to write and test.
 - **Database: SQLite** (one file, `data/dinig.db`). There is no server to install, and it copies with the laptop.
-- **Speech to text: faster-whisper, model "small"**, loaded **once** when the server starts. It runs well on a CPU inside the same Python process.
-- **Language AI: Qwen2.5 3B via Ollama** (`qwen2.5:3b`). It is small enough for a laptop with 16GB RAM and no graphics card, and Ollama gives us a simple local HTTP API.
+- **Speech to text: faster-whisper, model "small"**, loaded **once** when the server starts. It runs well on a CPU inside the same Python process. It runs with `compute_type="int8"`, which keeps memory low on 8GB laptops. [CHANGED]
+- **Language AI: Qwen2.5 3B via Ollama** (`qwen2.5:3b`) is the default. `qwen2.5:1.5b` is a fallback, set with `OLLAMA_MODEL` in `.env`, for when 3B is too slow or too big on an 8GB laptop. Ollama gives us a simple local HTTP API. [CHANGED]
 - **Audio conversion: ffmpeg** turns the browser's .webm into 16kHz mono .wav, which is the format Whisper needs.
 - **Package manager:** pip (backend only).
 - **OS:** Windows. Every command must work in the Windows terminal.
@@ -14,23 +15,29 @@
 | Part | Runs locally? | Needs internet? | Notes |
 | --- | --- | --- | --- |
 | Speech to text | Yes | No | Whisper small (about 470MB), faster-whisper, loaded once at startup |
-| Language AI | Yes | No | Qwen2.5 3B (about 1.9GB), Ollama at localhost:11434 |
+| Language AI | Yes | No | Ollama at localhost:11434: qwen2.5:3b (about 1.9GB) default, qwen2.5:1.5b fallback (.env) [CHANGED] |
 | Reading check | Yes | No | Plan A: Whisper + Python difflib. Plan B: MMS aligner (torchaudio) |
 | Audio conversion | Yes | No | ffmpeg; audio deleted right after scoring |
 | Backend | Yes | No | FastAPI at http://localhost:8000 |
 | Database | Yes | No | SQLite file `data/dinig.db` |
 | Frontend | Yes | No | Static files and bundled fonts, no CDN links |
+| Desktop launcher | Yes | No | start_dinig.bat + Edge app mode [CHANGED] |
+| Phone | Not needed | No | No phone, SMS or app login at any step [CHANGED] |
 | First-time setup | Yes | **Yes, once** | Downloading models, Python packages and fonts before the event |
+
+**Fully offline:** after first-time setup, Dinig never needs internet, a phone or an account. [CHANGED]
 
 ## Local AI setup
 - **Runtime:** Ollama (Qwen) and faster-whisper (Whisper), both on the laptop.
 - **Models:**
   - Qwen2.5 3B, about 1.9GB: run `ollama pull qwen2.5:3b`
+  - Qwen2.5 1.5B (fallback): run `ollama pull qwen2.5:1.5b`. Both models are pulled before the event. [CHANGED]
   - Whisper small, about 470MB: downloaded once by faster-whisper from Hugging Face, then loaded from a local folder (no internet at runtime)
   - Plan B only: the MMS forced aligner from torchaudio (`torchaudio.pipelines.MMS_FA`), downloaded ahead of time
-- **Minimum laptop needed:** 16GB RAM, no graphics card needed, Windows.
+- **Minimum laptop needed:** **8GB RAM** Windows laptop (typical DepEd laptop), no graphics card. [CHANGED]
 - **Demo laptop:** OPEN QUESTION (model, RAM, processor).
-- **Measured speed on our demo laptop:** OPEN QUESTION. We will measure: Done to result, quiz question time, answer check time and tip time. Only measured numbers go in the pitch.
+- **Measured speed on our demo laptop:** OPEN QUESTION. We will measure: Done to result, quiz question time, answer check time and tip time. This includes speed on an 8GB laptop with 3B vs 1.5B. Only measured numbers go in the pitch. [CHANGED]
+- **`.env` settings:** `OLLAMA_MODEL` (`qwen2.5:3b` or `qwen2.5:1.5b`), `WHISPER_COMPUTE_TYPE=int8`, `WHISPER_MODEL_DIR` (local folder), `READING_CHECK`. [CHANGED]
 - **Warm-up:** at startup, load Whisper and send one tiny prompt to Qwen (with Ollama `keep_alive`) so the first real request is not slow.
 
 ## Reading check module (Plan A and Plan B, and how to swap them)
@@ -56,6 +63,7 @@ Nothing else in the app knows which plan is used. A setting `READING_CHECK = "pl
 - Align each story word directly to the audio with torchaudio's MMS aligner.
 - A word with a low alignment score is red, and a word with no audio aligned to it is grey.
 - The score cutoff is an OPEN QUESTION, to be tuned by testing.
+- Plan B must be tested for memory on an 8GB laptop while Whisper and Qwen are also loaded. If it doesn't fit, it is not used: OPEN QUESTION. [CHANGED]
 
 The same module also scores the Practice Again sentences.
 
@@ -71,6 +79,22 @@ The same module also scores the Practice Again sentences.
 | Encouraging message | same as answer check | Pick from a fixed list of kind messages |
 | Practice sentences (Qwen) | 8 s | Template sentences: "I can read the word ___." |
 | Qwen returns bad JSON | none | Treated as a timeout, so the same fallback is used |
+| Qwen too slow or out of memory on 8GB | — | Set `OLLAMA_MODEL=qwen2.5:1.5b` in `.env` and restart [CHANGED] |
+
+## Desktop launcher (start_dinig.bat) [CHANGED]
+The teacher or parent double-clicks `start_dinig.bat` in the project root. It runs these steps:
+1. `cd /d %~dp0` to go to the app folder.
+2. Set `HF_HUB_OFFLINE=1`, so faster-whisper never tries to reach the internet. Whisper loads from its local folder (`WHISPER_MODEL_DIR` in `.env`, for example `models\faster-whisper-small`).
+3. Start `ollama serve` minimized if Ollama is not already running.
+4. Start the server minimized, in a window titled "Dinig server", with the project's virtual environment Python, **not** whatever `python` is on the PATH:
+   `venv\Scripts\python.exe -m uvicorn backend.main:app --host 127.0.0.1 --port 8000`
+5. Check `curl -s http://localhost:8000/health` every second until it answers. (`curl` is built into Windows.)
+6. Run `start "" msedge --app=http://localhost:8000`. Dinig opens on Home in its own window, with no tabs or address bar.
+
+Notes:
+- Closing the Edge window does not stop the server. To stop Dinig, close the minimized "Dinig server" window.
+- Edge asks for microphone permission the first time. Grant it once during setup, not on stage.
+- The server is bound to `127.0.0.1`, so other devices on the network cannot reach it.
 
 ## Data diagram (ERD, in Mermaid)
 ```mermaid
@@ -172,6 +196,8 @@ The skeleton prompt writes full request and response details into `docs/API.md`.
 Audio files are saved to a temp folder, and the server deletes them in a `finally` block so they are removed even when scoring fails.
 
 ## User flow (the screens a user clicks through, step by step)
+**Start (both):** double-click `start_dinig.bat`. Dinig opens on Home in its own window. [CHANGED]
+
 **Pupil:**
 1. Home: tap **I'm a Pupil**
 2. Pick Your Name
@@ -183,8 +209,8 @@ Audio files are saved to a temp folder, and the server deletes them in a `finall
 8. Practice Again (only if there are red words)
 9. All Done: tap **Next Reader**, which goes back to Pick Your Name
 
-**Teacher:**
-1. Home: tap **Teacher**
+**Teacher / Parent:** [CHANGED]
+1. Home: tap **Teacher / Parent** [CHANGED]
 2. Class View: scan the table and heatmap, read tips, add a pupil
 3. Back to Home, then hand the laptop to the next pupil
 
@@ -204,10 +230,15 @@ Audio files are saved to a temp folder, and the server deletes them in a `finall
 - As a **teacher**, I want one plain tip per pupil so that I know what to practice without analyzing data.
 - As a **teacher**, I want the app to work with no internet so that I can use it in my classroom any day.
 - As a **teacher**, I want children's voices deleted after scoring so that I protect my pupils' privacy.
+- As a **parent**, I want to listen to my child read at home on our laptop so that I know which words to help with. [CHANGED]
+- As a **parent**, I want my child's voice to stay on our laptop so that their privacy is protected at home too. [CHANGED]
+- As a **teacher or parent**, I want to open Dinig with one double-click so that I don't need to type commands or web addresses. [CHANGED]
 
 ## How the parts connect (frontend, backend, database, local AI model)
 ```mermaid
 flowchart LR
+    L["start_dinig.bat"] -- "starts server" --> F
+    L -- "opens Edge app mode" --> B
     B["Browser (frontend/)<br>HTML + JS + MediaRecorder"] -- "HTTP localhost:8000" --> F["FastAPI (backend/main.py)"]
     F --> RC["reading_check.py<br>Plan A or Plan B"]
     F --> AI["ai/local_models.py"]
@@ -217,5 +248,5 @@ flowchart LR
     F --> FF["ffmpeg<br>.webm to 16kHz mono .wav"]
     F --> DB[("SQLite data/dinig.db")]
 ```
-Suggested folders: `frontend/` (index.html, app.js, styles.css, fonts/), `backend/` (main.py, db.py, reading_check.py, ai/local_models.py, seed.py), `data/`.
-Open the app at **http://localhost:8000**. Use `localhost`, not an IP address, because browsers only allow the microphone on `localhost` or HTTPS.
+Suggested folders: `start_dinig.bat` (project root), `frontend/` (index.html, app.js, styles.css, fonts/), `backend/` (main.py, db.py, reading_check.py, ai/local_models.py, seed.py), `data/`, `models/`, `venv/`. [CHANGED]
+Double-click `start_dinig.bat`. It opens http://localhost:8000 in Edge app mode. Using `localhost` (not an IP address) keeps the microphone allowed, because browsers only allow the mic on `localhost` or HTTPS. [CHANGED]
