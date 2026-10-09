@@ -56,14 +56,16 @@ The API still calls wrong words `red`; on screen they are yellow "practice words
 **Heatmap cells:** the accuracy number is always printed inside each cell, so the heatmap does not rely on color alone. Grey is **not** used here, because grey means "skipped" on the result screen.
 | Accuracy | Text | Background | Meaning |
 | --- | --- | --- | --- |
-| 90%+ | `#0B5D45` | `#D1F0E4` | on track (green) |
-| 75 to 89% | `#7A5200` | `#FCEFC7` | almost there (amber) |
-| below 75% | `#9A3A00` | `#FDE0CC` | needs help (red) |
-| no reading yet | `#4B5563` | `#FFFFFF` | empty cell with a dash |
+| 90%+ | `#1d5a40` | `#e2f6ed` | On track (green) [CHANGED] |
+| 75 to 89% | `#5c4a00` | `#fff4c4` | Keep an eye (yellow) [CHANGED] |
+| below 75% | `#a33434` | `#fff0ef` | Needs help (red) [CHANGED] |
+| no reading yet | `#61706a` | `#ffffff` + border | empty cell with a dash, on the left (oldest side) |
+
+Dark mode has its own darker backgrounds with light text for the same four bands (see `.theme-dark .cell` in `frontend/styles.css`).
 
 These cutoffs are a design choice, not research. OPEN QUESTION: confirm them with a teacher.
 
-Check every text and background pair with a contrast checker and aim for at least 4.5:1.
+Check every text and background pair with a contrast checker and aim for at least 4.5:1 (3:1 for large text), in light and dark mode. Because of this, text greens and blues are a little darker than the prototype (`#00784a`, `#0f6f9c`), blue buttons use `#0a8ccc`, and in dark mode the bright green and blue buttons use dark text. [CHANGED]
 
 ## Fonts (large and easy for young readers)
 - **Headings, buttons and labels: Nunito** (free OFL license), from the designer's Figma Make prototype. [CHANGED]

@@ -11,10 +11,12 @@
 
 :root {
   --green: #00a460;
-  --green-dark: #008750;
+  /* green-dark and blue-dark are a little darker than the prototype so text on light backgrounds passes 4.5:1 */
+  --green-dark: #00784a;
   --green-soft: #e9f8f1;
   --blue: #1cb0f6;
-  --blue-dark: #138bc4;
+  --blue-dark: #0f6f9c;
+  --blue-button: #0a8ccc; /* white button text needs a deeper blue than the prototype's #1cb0f6 */
   --blue-soft: #eaf7fe;
   --yellow: #ffc800;
   --yellow-soft: #fff7d5;
@@ -85,7 +87,7 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 3px s
 .screen { display: none; min-height: calc(100vh - var(--topbar-h)); padding: 24px 32px; }
 .screen.active { display: block; }
 /* Restyled screens own their full layout */
-#home, #pick-name, #pick-story, #read-aloud, #checking, #my-result { padding: 0; }
+#home, #pick-name, #pick-story, #read-aloud, #checking, #my-result, #class-view { padding: 0; }
 
 /* Icons: inline SVG <use href="#i-..."> from the sprite at the top of index.html */
 .icon { display: block; flex: 0 0 auto; width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
@@ -98,10 +100,12 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 3px s
 .button:active { box-shadow: none; transform: translateY(3px); }
 .button:disabled { cursor: default; opacity: .6; transform: none; }
 .button-primary { background: var(--green); box-shadow: 0 5px 0 #007b48; color: white; }
-.button-blue { background: var(--blue); box-shadow: 0 5px 0 var(--blue-dark); color: white; }
+.button-blue { background: var(--blue-button); box-shadow: 0 5px 0 var(--blue-dark); color: white; }
 .button-yellow { background: var(--yellow); box-shadow: 0 5px 0 #d8a900; color: #5d4a00; }
 .button-quiet { border-color: var(--line); background: white; box-shadow: 0 4px 0 #d1dcd7; color: var(--muted); }
 .button-small { min-height: 40px; padding: 7px 14px; border-radius: 12px; font-size: 14px; box-shadow: 0 3px 0 #d1dcd7; }
+/* Small text needs 4.5:1, so small green buttons use the darker green */
+.button-small.button-primary { background: var(--green-dark); box-shadow: 0 3px 0 #005a37; }
 /* Main pupil action: at least 72px tall (docs/BRAND.md) */
 .button-big { min-height: 72px; padding: 14px 30px; border-radius: 20px; font-size: 20px; }
 
@@ -318,7 +322,80 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 3px s
 .story-card-copy strong { margin-top: 6px; font-family: var(--font-head); font-size: 22px; font-weight: 900; }
 .story-go { position: absolute; right: 18px; bottom: 20px; display: grid; width: 40px; height: 40px; place-items: center; border-radius: 12px; background: var(--green); color: white; }
 
+/* Pill colors follow the status: green = AI ready, yellow = backup mode, grey = not ready */
+.offline-pill.warn { border-color: #ecd68a; background: var(--yellow-soft); color: #6b5500; }
+.offline-pill.off { border-color: var(--line); background: #eef1f0; color: var(--muted); }
+.pill-sep { opacity: .6; }
+
+/* ---------- Class View (teacher / parent): dense, sortable ---------- */
+
+body.teacher { font-size: 15px; }
+.class-page { width: min(1300px, calc(100% - 48px)); margin: 0 auto; padding: 20px 0 28px; }
+.class-heading { display: flex; align-items: flex-end; gap: 24px; }
+.class-heading > div:first-child { flex: 0 0 auto; }
+.class-heading h1 { margin: 8px 0 4px; font-family: var(--font-head); font-size: 36px; font-weight: 900; letter-spacing: -.03em; line-height: 1; }
+.class-heading .button { margin-left: auto; align-self: center; }
+.sample-label { display: inline-flex; padding: 5px 11px; border-radius: 999px; background: var(--yellow-soft); color: #6b5500; font-size: 13px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+.class-status { display: flex; align-items: center; gap: 8px; margin: 0; color: var(--muted); font-size: 14px; }
+.class-summary { display: grid; grid-template-columns: repeat(3, auto); overflow: hidden; border: 2px solid var(--line); border-radius: 16px; background: var(--surface); }
+.class-summary > span { display: grid; padding: 10px 20px; }
+.class-summary > span + span { border-left: 1px solid var(--line); }
+.class-summary strong { font-family: var(--font-head); font-size: 24px; font-weight: 900; }
+.class-summary small { color: var(--muted); font-size: 13px; }
+.class-tools { display: flex; align-items: center; gap: 24px; margin-top: 16px; flex-wrap: wrap; }
+.field { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 14px; font-weight: 700; }
+.add-pupil { display: flex; align-items: center; gap: 8px; }
+.class-tools input, .class-tools select { min-height: 40px; padding: 7px 11px; border: 2px solid var(--line); border-radius: 11px; background: var(--surface); color: var(--ink); font: inherit; font-size: 14px; }
+.class-tools input { width: 230px; }
+.class-tools input::placeholder { color: var(--muted); opacity: 1; }
+.class-table-card { margin-top: 14px; overflow: hidden; border: 2px solid var(--line); border-radius: 20px; background: var(--surface); box-shadow: var(--shadow); }
+.class-table { width: 100%; border-collapse: collapse; }
+.class-table th { position: sticky; top: 0; z-index: 1; padding: 10px 12px; background: #f1f5f3; color: var(--muted); font-size: 13px; font-weight: 700; text-align: left; white-space: nowrap; }
+.class-table td { padding: 7px 12px; border-top: 1px solid #e6edea; color: var(--ink); font-size: 14px; vertical-align: middle; }
+.pupil-cell { display: flex; align-items: center; gap: 9px; white-space: nowrap; }
+.pupil-cell strong { font-family: var(--font-head); font-size: 15px; font-weight: 800; }
+.pupil-cell small { color: var(--muted); font-size: 13px; }
+.table-initial { width: 32px; height: 32px; flex-basis: 32px; border-radius: 10px; font-size: 15px; }
+.score-cell { font-weight: 700; white-space: nowrap; }
+.tip-cell { max-width: 300px; color: var(--muted); }
+.class-table tr.newest td { background: var(--blue-soft); }
+.new-tag { padding: 2px 7px; border-radius: 6px; background: #d3ecf8; color: #0b5a80; font-size: 13px; font-weight: 700; }
+.support-label { display: inline-flex; padding: 4px 9px; border-radius: 8px; font-size: 13px; font-weight: 700; white-space: nowrap; }
+.support-label.good { background: var(--green-soft); color: #00693e; }
+.support-label.almost { background: var(--yellow-soft); color: #6b5500; }
+.support-label.help { background: #fff0ef; color: #a33434; }
+.support-label.none { border: 1px solid var(--line); color: var(--muted); }
+/* Heatmap: the number is always printed, so color is never the only cue */
+.heat { display: flex; gap: 4px; }
+.cell { display: inline-block; width: 38px; padding: 3px 0; border-radius: 6px; font-size: 13px; font-weight: 700; text-align: center; font-variant-numeric: tabular-nums; }
+.cell.good { background: #e2f6ed; color: #1d5a40; }
+.cell.almost { background: #fff4c4; color: #5c4a00; }
+.cell.help { background: #fff0ef; color: #a33434; }
+.cell.none { border: 1px solid var(--line); background: var(--surface); color: var(--muted); }
+.heat-legend { display: flex; align-items: center; gap: 7px; margin: 12px 0 0; color: var(--muted); font-size: 13px; flex-wrap: wrap; }
+.heat-legend .cell { width: auto; padding: 2px 7px; }
+.heat-legend .cell + * { margin-right: 6px; }
+
 /* ---------- Dark mode overrides (explicit; light stays the default) ---------- */
+
+/* Bright dark-mode buttons get dark text (white on them is only about 2:1) */
+.theme-dark .button-primary,
+.theme-dark .mic-button.recording { background: var(--green); box-shadow: 0 5px 0 #138a58; color: #052a1a; }
+.theme-dark .button-blue { background: var(--blue); box-shadow: 0 5px 0 #1d7fb0; color: #06283a; }
+.theme-dark .offline-pill.warn { border-color: #5c5020; color: #ffe680; }
+.theme-dark .offline-pill.off { background: #202d28; }
+.theme-dark .sample-label { color: #ffe680; }
+.theme-dark .class-tools input,
+.theme-dark .class-tools select { background: #202d28; }
+.theme-dark .class-table th { background: #202d28; }
+.theme-dark .class-table td { border-color: #2a3b35; }
+.theme-dark .new-tag { background: #1f4a5e; color: #bfe9fc; }
+.theme-dark .support-label.good { color: #8be5b8; }
+.theme-dark .support-label.almost { color: #ffe680; }
+.theme-dark .support-label.help { background: #4a2323; color: #ffb3b3; }
+.theme-dark .cell.good { background: #174b36; color: #c4f5dd; }
+.theme-dark .cell.almost { background: #4a3f12; color: #ffe680; }
+.theme-dark .cell.help { background: #4a2323; color: #ffb3b3; }
 
 .theme-dark .topbar,
 .theme-dark .home-topbar { background: rgba(24, 35, 31, .96); }
@@ -359,8 +436,6 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 3px s
    ================================================================ */
 
 body.pupil .screen:not(#home):not(#pick-name):not(#pick-story):not(#read-aloud):not(#checking):not(#my-result) { font-family: "Andika", sans-serif; font-size: 22px; }
-body.teacher .screen { font-family: "Atkinson Hyperlegible", sans-serif; font-size: 16px; }
-.small { font-size: 0.85em; }
 
 /* Header bar */
 .bar { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; flex-wrap: wrap; }
@@ -378,8 +453,6 @@ body.teacher .screen { font-family: "Atkinson Hyperlegible", sans-serif; font-si
 .btn.recording { background: var(--red-text); }
 
 .big-buttons { display: flex; gap: 24px; justify-content: center; flex-wrap: wrap; margin: 32px 0; }
-.badge { display: inline-block; font-size: 0.7em; background: var(--card); border: 1px solid var(--border); border-radius: 999px; padding: 4px 12px; color: var(--muted); vertical-align: middle; }
-.status { color: var(--muted); font-size: 0.75em; }
 
 .story { font-size: 36px; line-height: 1.8; background: var(--card); border-radius: 18px; padding: 24px 32px; max-width: 1100px; }
 .read-controls { display: flex; align-items: center; gap: 24px; margin-top: 24px; flex-wrap: wrap; }
@@ -393,20 +466,3 @@ body.teacher .screen { font-family: "Atkinson Hyperlegible", sans-serif; font-si
 .feedback { font-size: 1.3em; font-weight: 700; color: var(--primary); }
 .practice p { margin: 0 0 8px; }
 .stars { font-size: 4em; color: var(--accent); }
-
-/* Class View (teacher / parent): dense, 40 rows on one screen */
-.class-tools { display: flex; gap: 24px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; }
-.add-pupil { display: flex; gap: 8px; align-items: center; }
-.add-pupil input, .add-pupil select, .class-tools select { font: inherit; padding: 5px 8px; border: 1px solid var(--border); border-radius: 6px; }
-.class-grid { overflow-x: auto; }
-.class-table { width: 100%; border-collapse: collapse; background: var(--card); }
-.class-table th, .class-table td { text-align: left; padding: 5px 10px; border-bottom: 1px solid var(--border); vertical-align: middle; }
-.class-table th { background: #F7F8FA; position: sticky; top: 0; }
-.class-table tr.newest { background: #EAF1FB; }
-.class-table tr.newest td:first-child::after { content: " NEW"; font-size: 0.7em; font-weight: 700; color: var(--primary); }
-.heat { display: flex; gap: 4px; }
-.cell { width: 38px; text-align: center; border-radius: 4px; font-size: 0.85em; padding: 2px 0; font-variant-numeric: tabular-nums; }
-.cell.good { color: var(--green-text); background: var(--green-bg); }
-.cell.almost { color: var(--amber-text); background: var(--amber-bg); }
-.cell.help { color: var(--red-text); background: var(--red-bg); font-weight: 700; }
-.cell.none { color: var(--grey-text); background: #fff; border: 1px solid var(--border); }

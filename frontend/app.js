@@ -105,7 +105,10 @@ async function refreshStatus() {
     $(d).className = "dot " + cls;
     $(t).textContent = text;
   });
-  $("#topbar-dot").className = "dot " + cls; // top bar pill: colored dot, full text on hover
+  // Top bar pill: short status always visible, full text on hover
+  $("#topbar-dot").className = "dot " + cls;
+  $("#topbar-status").textContent = cls === "ok" ? "AI ready" : cls === "warn" ? "Backup mode" : "Not ready";
+  $("#topbar-pill").className = "offline-pill " + (cls || "off");
   $("#topbar-pill").title = text;
 }
 onEnter["home"] = refreshStatus;
@@ -449,27 +452,52 @@ function renderClass() {
   }
   const newest = classData.reduce((best, p) => (p.last_read_at && (!best || p.last_read_at > best.last_read_at) ? p : best), null);
 
+  // Summary strip: pupils, average of each pupil's latest reading, and how many are below 75%
+  const read = classData.filter((p) => p.latest_accuracy !== null);
+  $("#sum-pupils").textContent = classData.length;
+  $("#sum-average").textContent = read.length
+    ? `${Math.round((read.reduce((sum, p) => sum + p.latest_accuracy, 0) / read.length) * 100)}%` : "–";
+  $("#sum-help").textContent = read.filter((p) => band(p.latest_accuracy) === "help").length;
+
   const tbody = $("#class-rows");
   tbody.textContent = "";
   rows.forEach((p) => {
     const tr = el("tr", newest && p.id === newest.id ? { class: "newest" } : {});
-    tr.appendChild(el("td", {}, p.class_no ? `${p.first_name} (${p.class_no})` : p.first_name));
-    tr.appendChild(el("td", {}, p.latest_accuracy === null ? "–"
+
+    // Same initial-badge colors as Pick Your Name (color kept per pupil, whatever the sort)
+    const td1 = el("td");
+    const who = el("div", { class: `pupil-cell name-${(classData.indexOf(p) % 6) + 1}` });
+    who.appendChild(el("span", { class: "name-initial table-initial", "aria-hidden": "true" }, initials(p.first_name)));
+    who.appendChild(el("strong", {}, p.first_name));
+    if (p.class_no) who.appendChild(el("small", {}, `No. ${p.class_no}`));
+    if (tr.className === "newest") who.appendChild(el("span", { class: "new-tag" }, "NEW"));
+    td1.appendChild(who);
+    tr.appendChild(td1);
+
+    tr.appendChild(el("td", { class: "score-cell" }, p.latest_accuracy === null ? "–"
       : `${Math.round(p.latest_accuracy * 100)}% (${p.latest_words_correct}/${p.latest_total_words})`));
     tr.appendChild(el("td", {}, p.latest_seconds === null ? "–" : formatTime(p.latest_seconds)));
     tr.appendChild(el("td", {}, p.trouble_words.join(", ") || "–"));
-    tr.appendChild(el("td", {}, p.tip || "–"));
+    tr.appendChild(el("td", { class: "tip-cell" }, p.tip || "–"));
+
+    const support = el("td");
+    support.appendChild(el("span", { class: `support-label ${band(p.latest_accuracy)}` }, SUPPORT[band(p.latest_accuracy)]));
+    tr.appendChild(support);
+
+    // Heatmap: blanks on the left (oldest side), so the newest reading is always the last cell
     const heat = el("div", { class: "heat" });
-    for (let i = 0; i < 5; i++) {
-      const acc = p.last5[i];
+    const cells = [...Array(5 - p.last5.length).fill(undefined), ...p.last5];
+    cells.forEach((acc) => {
       heat.appendChild(el("span", { class: `cell ${band(acc)}` }, acc === undefined ? "–" : String(Math.round(acc * 100))));
-    }
+    });
     const td = el("td");
     td.appendChild(heat);
     tr.appendChild(td);
     tbody.appendChild(tr);
   });
 }
+
+const SUPPORT = { good: "On track", almost: "Keep an eye", help: "Needs help", none: "No reading yet" };
 
 onEnter["class-view"] = async () => {
   refreshStatus();

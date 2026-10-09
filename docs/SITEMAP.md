@@ -1,6 +1,6 @@
 # Sitemap
 
-**Top bar** (every screen except Home): Dinig logo (goes Home and stops any recording), "Step X of 8" stepper on the 8 pupil screens (Pick Your Name = 1 … All Done = 8, none on Class View), "Works offline" pill with the model status dot, and a Dark/Light toggle (light on every start, never saved). Home has its own bar with the logo, the full status text and the toggle. [CHANGED]
+**Top bar** (every screen except Home): Dinig logo (goes Home and stops any recording), "Step X of 8" stepper on the 8 pupil screens (Pick Your Name = 1 … All Done = 8, none on Class View), "Works offline" pill with the model status dot and a short status ("AI ready", "Backup mode" when Qwen is not running, or "Not ready"), and a Dark/Light toggle (light on every start, never saved). Home has its own bar with the logo, the full status text and the toggle. [CHANGED]
 
 | Screen | Mode (Pupil or Teacher / Parent) [CHANGED] | What is on it | Goes to | Feature |
 | --- | --- | --- | --- | --- |
@@ -13,4 +13,4 @@
 | Story Quiz | Pupil | One question at a time (2 total), big **Answer** mic button, "right" or "not yet" with an encouraging line | Practice Again (if red words) or All Done | Story Quiz |
 | Practice Again | Pupil | 2 to 3 short sentences with practice words highlighted, big mic button, result "Before: 3 wrong words. Now: 1 wrong word." | All Done | Practice Again |
 | All Done | Pupil | Stars and a big "Great reading, [name]!", **Next Reader** button | Pick Your Name, Home | — |
-| Class View | Teacher / Parent [CHANGED] | Works the same for a class of one (a parent with one child) [CHANGED]. "Sample class" label, table (pupil, latest score, time, trouble words, tip) with sort "Newest first" or "Needs help first", newest reading highlighted, heatmap (rows = pupils, columns = last 5 readings), **Add Pupil** form (first name or class number, grade), model status | Home | Teacher's Class View |
+| Class View | Teacher / Parent [CHANGED] | Works the same for a class of one (a parent with one child) [CHANGED]. "Sample class" label, summary (pupils, class average of latest readings, how many need help) [CHANGED], table (pupil, latest score, time, trouble words, tip, support label: On track / Keep an eye / Needs help / No reading yet [CHANGED]) with sort "Newest first" or "Needs help first", newest reading highlighted with a NEW tag, heatmap (rows = pupils, columns = last 5 readings, oldest to newest, blanks on the left) [CHANGED], **Add Pupil** form (first name or class number, grade), model status | Home | Teacher's Class View |

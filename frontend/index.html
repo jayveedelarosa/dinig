@@ -6,7 +6,6 @@
   <title>Dinig</title>
   <link rel="icon" href="data:,">
   <!-- TODO [FRONTEND]: real Dinig icon (designer) -->
-  <!-- TODO [FRONTEND]: Class View heatmap: put the "–" blanks on the left (oldest side) so the newest reading is always the last cell. -->
   <!-- TODO [FRONTEND]: Story Quiz screen is very bare; show the story title or picture (designer screens). -->
   <!-- Everything is local: no CDN, no Google Fonts. Fonts live in /fonts/. -->
   <link rel="stylesheet" href="styles.css">
@@ -34,7 +33,7 @@
       <div><i id="stepper-fill"></i></div>
     </div>
     <div class="topbar-actions">
-      <div class="offline-pill" id="topbar-pill"><i id="topbar-dot" class="dot"></i><span>Works offline</span></div>
+      <div class="offline-pill" id="topbar-pill"><i id="topbar-dot" class="dot"></i><span>Works offline</span><span class="pill-sep">·</span><span id="topbar-status">Checking...</span></div>
       <button class="theme-toggle" type="button"><svg class="icon icon-sm"><use href="#i-theme"/></svg><span class="theme-label">Dark</span></button>
     </div>
   </header>
@@ -231,31 +230,41 @@
 
   <!-- Class View (teacher / parent) -->
   <section id="class-view" class="screen">
-    <header class="bar">
-      <button class="btn btn-back" data-go="home">Home</button>
-      <h2>Class View <span class="badge">Sample class</span></h2>
-      <span class="status small"><span id="status-dot-2" class="dot"></span> <span id="status-text-2"></span></span>
-    </header>
-    <div class="class-tools">
-      <label>Sort:
-        <select id="sort-select">
-          <option value="newest">Newest first</option>
-          <option value="help">Needs help first</option>
-        </select>
-      </label>
-      <form id="add-pupil" class="add-pupil">
-        <input name="first_name" placeholder="First name or class no." required maxlength="40">
-        <select name="grade"><option value="3">Grade 3</option><option value="4">Grade 4</option></select>
-        <button class="btn btn-small" type="submit">Add Pupil</button>
-      </form>
+    <div class="class-page">
+      <div class="class-heading">
+        <div>
+          <span class="sample-label">Sample class</span>
+          <h1>Class View</h1>
+          <p class="class-status"><span id="status-dot-2" class="dot"></span><span id="status-text-2"></span></p>
+        </div>
+        <div class="class-summary">
+          <span><strong id="sum-pupils">–</strong><small>Pupils</small></span>
+          <span><strong id="sum-average">–</strong><small>Class average (latest)</small></span>
+          <span><strong id="sum-help">–</strong><small>May need help</small></span>
+        </div>
+        <button class="button button-quiet button-small" data-go="home"><svg class="icon icon-sm"><use href="#i-home"/></svg>Home</button>
+      </div>
+      <div class="class-tools">
+        <label class="field">Sort
+          <select id="sort-select">
+            <option value="newest">Newest first</option>
+            <option value="help">Needs help first</option>
+          </select>
+        </label>
+        <form id="add-pupil" class="add-pupil">
+          <input name="first_name" placeholder="First name or class no." required maxlength="40" aria-label="First name or class number">
+          <select name="grade" aria-label="Grade"><option value="3">Grade 3</option><option value="4">Grade 4</option></select>
+          <button class="button button-primary button-small" type="submit">Add Pupil</button>
+        </form>
+      </div>
+      <section class="class-table-card">
+        <table class="class-table">
+          <thead><tr><th>Pupil</th><th>Latest score</th><th>Time</th><th>Trouble words</th><th>Tip</th><th>Support</th><th>Last 5 readings</th></tr></thead>
+          <tbody id="class-rows"></tbody>
+        </table>
+      </section>
+      <p class="heat-legend">Last 5 readings, oldest to newest: <span class="cell good">90+</span> on track <span class="cell almost">75–89</span> keep an eye <span class="cell help">&lt;75</span> needs help <span class="cell none">–</span> no reading yet</p>
     </div>
-    <div class="class-grid">
-      <table class="class-table">
-        <thead><tr><th>Pupil</th><th>Latest score</th><th>Time</th><th>Trouble words</th><th>Tip</th><th>Last 5 readings</th></tr></thead>
-        <tbody id="class-rows"></tbody>
-      </table>
-    </div>
-    <p class="muted small">Heatmap: green 90%+ · amber 75–89% · red below 75% (needs help) · – no reading yet.</p>
   </section>
 
   <script src="app.js"></script>
