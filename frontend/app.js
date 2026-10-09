@@ -36,9 +36,23 @@ function formatTime(seconds) {
 
 const onEnter = {}; // screen id -> function run when the screen opens
 
+// Pupil steps shown in the top bar as "Step X of 8"
+const STEPS = ["pick-name", "pick-story", "read-aloud", "checking", "my-result", "story-quiz", "practice-again", "all-done"];
+
+function updateTopbar(id) {
+  $("#topbar").classList.toggle("hidden", id === "home"); // Home has its own top bar
+  const step = STEPS.indexOf(id) + 1;
+  $("#stepper").classList.toggle("invisible", step === 0); // no stepper on Class View
+  if (step) {
+    $("#stepper-text").textContent = `Step ${step} of ${STEPS.length}`;
+    $("#stepper-fill").style.width = `${(step / STEPS.length) * 100}%`;
+  }
+}
+
 function go(id) {
   document.querySelectorAll(".screen").forEach((s) => s.classList.toggle("active", s.id === id));
   document.body.className = TEACHER_SCREENS.includes(id) ? "teacher" : "pupil";
+  updateTopbar(id);
   document.querySelectorAll(".pupil-name").forEach((n) => (n.textContent = state.pupil ? state.pupil.first_name : ""));
   window.scrollTo(0, 0);
   if (onEnter[id]) onEnter[id]();
@@ -48,6 +62,21 @@ document.addEventListener("click", (e) => {
   const target = e.target.closest("[data-go]");
   if (target) go(target.dataset.go);
 });
+
+// Logo in the top bar: stop any recording, then go Home
+$("#brand-home").addEventListener("click", () => { mic.cancel(); resetReadAloud(); go("home"); });
+
+// ---------- Light / dark theme ----------
+// Light on every start. Dark only while the toggle is on; it is never saved.
+// The class goes on <html> because go() replaces the <body> class.
+
+document.querySelectorAll(".theme-toggle").forEach((btn) => btn.addEventListener("click", () => {
+  const dark = document.documentElement.classList.toggle("theme-dark");
+  document.querySelectorAll(".theme-toggle").forEach((b) => {
+    b.querySelector(".theme-label").textContent = dark ? "Light" : "Dark";
+    b.setAttribute("aria-label", dark ? "Switch to light mode" : "Switch to dark mode");
+  });
+}));
 
 // ---------- Home: model status from /health ----------
 
@@ -76,6 +105,8 @@ async function refreshStatus() {
     $(d).className = "dot " + cls;
     $(t).textContent = text;
   });
+  $("#topbar-dot").className = "dot " + cls; // top bar pill: colored dot, full text on hover
+  $("#topbar-pill").title = text;
 }
 onEnter["home"] = refreshStatus;
 
@@ -85,13 +116,22 @@ onEnter["pick-name"] = async () => {
   const box = $("#name-tiles");
   box.textContent = "";
   const pupils = await api("/pupils");
-  pupils.forEach((p) => {
-    const tile = el("button", { class: "tile" }, p.class_no ? `${p.first_name} (${p.class_no})` : p.first_name);
-    tile.appendChild(el("span", { class: "sub" }, `Grade ${p.grade}`));
+  pupils.forEach((p, i) => {
+    // Colored initial badge (6 colors in turn), name, then grade and class number
+    const tile = el("button", { class: `name-tile name-${(i % 6) + 1}`, type: "button" });
+    tile.appendChild(el("span", { class: "name-initial", "aria-hidden": "true" }, initials(p.first_name)));
+    const text = el("span", { class: "name-text" });
+    text.appendChild(el("strong", {}, p.first_name));
+    text.appendChild(el("small", {}, p.class_no ? `Grade ${p.grade} · No. ${p.class_no}` : `Grade ${p.grade}`));
+    tile.appendChild(text);
     tile.addEventListener("click", () => { state.pupil = p; go("pick-story"); });
     box.appendChild(tile);
   });
 };
+
+function initials(name) {
+  return /^\d/.test(name) ? name.slice(0, 2) : name.charAt(0).toUpperCase(); // class numbers keep their digits
+}
 
 // ---------- Pick a Story ----------
 
@@ -99,9 +139,17 @@ onEnter["pick-story"] = async () => {
   const box = $("#story-cards");
   box.textContent = "";
   const stories = await api("/stories");
-  stories.forEach((s) => {
-    const tile = el("button", { class: "tile" }, s.title);
-    tile.appendChild(el("span", { class: "sub" }, `Grade ${s.grade_level}`));
+  const covers = ["meadow", "seed", "rain"]; // the designer's three cover colors, in turn
+  stories.forEach((s, i) => {
+    const tile = el("button", { class: "story-choice-card", type: "button" });
+    tile.innerHTML = `<span class="story-art story-art-${covers[i % 3]}"><svg class="icon icon-xl"><use href="#i-book"/></svg><i></i></span>`;
+    const copy = el("span", { class: "story-card-copy" });
+    copy.appendChild(el("small", {}, `Grade ${s.grade_level}`));
+    copy.appendChild(el("strong", {}, s.title));
+    tile.appendChild(copy);
+    const arrow = el("span", { class: "story-go" });
+    arrow.innerHTML = `<svg class="icon"><use href="#i-arrow"/></svg>`;
+    tile.appendChild(arrow);
     tile.addEventListener("click", async () => {
       state.story = await api(`/stories/${s.id}`);
       go("read-aloud");

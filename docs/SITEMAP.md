@@ -1,10 +1,12 @@
 # Sitemap
 
+**Top bar** (every screen except Home): Dinig logo (goes Home and stops any recording), "Step X of 8" stepper on the 8 pupil screens (Pick Your Name = 1 … All Done = 8, none on Class View), "Works offline" pill with the model status dot, and a Dark/Light toggle (light on every start, never saved). Home has its own bar with the logo, the full status text and the toggle. [CHANGED]
+
 | Screen | Mode (Pupil or Teacher / Parent) [CHANGED] | What is on it | Goes to | Feature |
 | --- | --- | --- | --- | --- |
 | Home | Both | Opens in its own window from `start_dinig.bat` (Edge app mode, no tabs or address bar). Dinig logo, 2 big buttons: **I'm a Pupil** and **Teacher / Parent**, small "No internet or phone needed" badge, model status dot (from `/health`) [CHANGED] | Pick Your Name, Class View | — |
-| Pick Your Name | Pupil | Big name tiles (first name or class number), Back button | Pick a Story, Home | Read and Check |
-| Pick a Story | Pupil | 3 story cards (title + small picture), Back button | Read Aloud | Read and Check |
+| Pick Your Name | Pupil | Name tiles (initial, first name, grade, class number) in 6 columns so a class of 40 fits one screen, each at least 64px tall, Back button [CHANGED] | Pick a Story, Home | Read and Check |
+| Pick a Story | Pupil | 3 story cards (title, grade, colored cover), Back button | Read Aloud | Read and Check |
 | Read Aloud | Pupil | Story text in large font, big **Start** button that becomes **Done**, timer, "I'm listening" mic animation | Checking | Read and Check |
 | Checking | Pupil | Friendly loading animation: "Listening to your reading..." | My Result (or Read Aloud on error: "Let's try again!") | Read and Check |
 | My Result | Pupil | Story with every word green, red ("practice word") or grey (skipped), plus a legend with icons, "42 of 50 words correct", reading time, kind message, **Next** button | Story Quiz | Read and Check |

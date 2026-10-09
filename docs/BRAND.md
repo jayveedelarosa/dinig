@@ -35,14 +35,14 @@
 - In Pupil mode, never use "wrong", "fail" or "bad". Red words are called **practice words**.
 
 ## Colors (with hex codes, including the green, red, and grey for word results, readable for color-blind users)
-**Word results.** Color is never the only signal, so each result also has a shape:
-| Result | Text | Background | Extra cue (for color-blind users) | Pupil sees |
+**Word results.** Color is never the only signal, so each result also has a shape. Colors follow the designer's prototype: [CHANGED]
+| Result (API status) | Text | Background | Extra cue (for color-blind users) | Pupil sees |
 | --- | --- | --- | --- | --- |
-| Green (correct) | `#0B5D45` | `#D1F0E4` | ✓ in legend | correct |
-| Red (wrong) | `#9A3A00` | `#FDE0CC` | wavy underline | practice word |
-| Grey (skipped) | `#4B5563` | `#E5E7EB` | dashed outline | skipped |
+| `green` (correct) | `#1d5a40` | `#e2f6ed` | solid green bottom line | Correct |
+| `red` (wrong) | `#5c4a00` | `#fff4c4` (yellow) | wavy underline | Practice word |
+| `grey` (skipped) | `#5f6b66` | `#eef1f0` | dashed outline | Skipped |
 
-The green and red are based on the Okabe-Ito color-blind-safe palette (bluish green and vermillion), so they also differ in brightness.
+The API still calls wrong words `red`; on screen they are yellow "practice words", which feels kinder and still differs from green in brightness.
 
 **App colors**
 | Use | Hex |
@@ -66,12 +66,18 @@ These cutoffs are a design choice, not research. OPEN QUESTION: confirm them wit
 Check every text and background pair with a contrast checker and aim for at least 4.5:1.
 
 ## Fonts (large and easy for young readers)
-- **Pupil mode: Andika** (SIL, free OFL license). It was designed for beginning readers and has simple "a" and "g" shapes.
+- **Headings, buttons and labels: Nunito** (free OFL license), from the designer's Figma Make prototype. [CHANGED]
+- **Story text: Andika** (SIL, free OFL license). It was designed for beginning readers and has simple "a" and "g" shapes.
   - Story text: 32 to 40px, line height 1.8
-  - Buttons: at least 72px tall
-- **Teacher mode: Atkinson Hyperlegible** (free OFL license). It is clear at small sizes, so 40 rows fit on one screen.
-  - Base size: 16px
-- Download both fonts once and **bundle them in `frontend/fonts/`**. Never link to Google Fonts, because the app must load offline.
+  - Main pupil buttons: at least 72px tall; name tiles at least 64px tall
+- **Body and table text: Atkinson Hyperlegible** (free OFL license). It is clear at small sizes, so the Class View stays dense.
+- Smallest text anywhere: 13px. [CHANGED]
+- Download the fonts once and **bundle them in `frontend/fonts/`**. Never link to Google Fonts, because the app must load offline.
+
+## Look and theme [CHANGED]
+- The UI follows the designer's Figma Make prototype (kept locally in `design-ref/`, not in git), ported to plain CSS. Color tokens live at the top of `frontend/styles.css` (green `#00a460` primary, blue `#1cb0f6`, yellow `#ffc800`, ink `#303a36`, canvas `#f6f9f7`).
+- Light mode on every start. Dark mode turns on only when the Dark/Light toggle in the top bar is clicked, and it is never saved.
+- Mascot: Dindin the elephant (sprite of expressions + an idling SVG on Home).
 
 ## Do and don't
 **Do**

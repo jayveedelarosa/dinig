@@ -116,7 +116,7 @@ Minimum laptop: 8GB RAM, no graphics card. Tested on: OPEN QUESTION (demo laptop
   - Whisper small, converted for faster-whisper: https://huggingface.co/Systran/faster-whisper-small (MIT license, original model by OpenAI)
   - Qwen2.5 3B Instruct and Qwen2.5 1.5B Instruct via Ollama: https://ollama.com/library/qwen2.5 (Qwen2.5 3B: Qwen Research License; Qwen2.5 1.5B: Apache 2.0)
 - **Technologies and frameworks:** Python, FastAPI, Uvicorn, faster-whisper (CTranslate2), Ollama, SQLite, ffmpeg (via imageio-ffmpeg), plain HTML/CSS/JavaScript, Microsoft Edge app mode
-- **Fonts:** Andika (SIL International) and Atkinson Hyperlegible (Braille Institute), both SIL Open Font License, bundled in `frontend/fonts/`
+- **Fonts:** Nunito (The Nunito Project Authors), Andika (SIL International) and Atkinson Hyperlegible (Braille Institute), all SIL Open Font License, bundled in `frontend/fonts/`
 - **APIs and cloud services:** None.
 - **Existing code and assets:** None. Built during the hackathon.
-- **AI development tools:** Claude Code (planning docs and code scaffolding). [add others the team used]
+- **AI development tools:** Claude Code (planning docs and code scaffolding), Figma Make (UI design). [add others the team used]

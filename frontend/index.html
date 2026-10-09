@@ -6,7 +6,6 @@
   <title>Dinig</title>
   <link rel="icon" href="data:,">
   <!-- TODO [FRONTEND]: real Dinig icon (designer) -->
-  <!-- TODO [FRONTEND]: Pick Your Name with 40 pupils: smaller tiles or class numbers so the class fits one screen. -->
   <!-- TODO [FRONTEND]: Class View heatmap: put the "–" blanks on the left (oldest side) so the newest reading is always the last cell. -->
   <!-- TODO [FRONTEND]: Story Quiz screen is very bare; show the story title or picture (designer screens). -->
   <!-- Everything is local: no CDN, no Google Fonts. Fonts live in /fonts/. -->
@@ -27,33 +26,104 @@
     <symbol id="i-theme" viewBox="0 0 24 24"><path d="M20 15.5A8 8 0 0 1 8.5 4 8 8 0 1 0 20 15.5z"/><path d="M17 3v2M21 7h-2M18.5 5.5 20 4"/></symbol>
   </svg>
 
+  <!-- Top bar on every screen except Home: logo (goes Home), stepper, offline pill, theme toggle -->
+  <header id="topbar" class="topbar hidden">
+    <button id="brand-home" class="brand" type="button" aria-label="Go to home"><img src="assets/52b47.svg" alt="Dinig"></button>
+    <div id="stepper" class="stepper">
+      <span id="stepper-text">Step 1 of 8</span>
+      <div><i id="stepper-fill"></i></div>
+    </div>
+    <div class="topbar-actions">
+      <div class="offline-pill" id="topbar-pill"><i id="topbar-dot" class="dot"></i><span>Works offline</span></div>
+      <button class="theme-toggle" type="button"><svg class="icon icon-sm"><use href="#i-theme"/></svg><span class="theme-label">Dark</span></button>
+    </div>
+  </header>
+
   <!-- Home (both modes) -->
   <section id="home" class="screen active">
-    <div class="home-wrap">
-      <h1 class="logo">Dinig</h1>
-      <p class="tagline">Read aloud. Dinig listens.</p>
-      <div class="big-buttons">
-        <button class="btn btn-big" data-go="pick-name">I'm a Pupil</button>
-        <button class="btn btn-big btn-secondary" data-go="class-view">Teacher / Parent</button>
+    <header class="home-topbar">
+      <span class="brand"><img src="assets/52b47.svg" alt="Dinig"></span>
+      <div class="topbar-actions">
+        <div class="offline-pill"><i id="status-dot" class="dot"></i><span id="status-text">Checking...</span></div>
+        <button class="theme-toggle" type="button"><svg class="icon icon-sm"><use href="#i-theme"/></svg><span class="theme-label">Dark</span></button>
       </div>
-      <p class="badges">
-        <span class="badge">No internet or phone needed</span>
-        <span class="badge">Voice deleted after checking</span>
-      </p>
-      <p class="status"><span id="status-dot" class="dot"></span> <span id="status-text">Checking...</span></p>
+    </header>
+    <div class="home-hero">
+      <div class="home-copy">
+        <span class="eyebrow"><svg class="icon icon-sm"><use href="#i-sparkles"/></svg>Your friendly reading buddy</span>
+        <h1>Who is using Dinig?</h1>
+        <p>Choose where you want to go. No account or internet needed.</p>
+        <div class="home-actions">
+          <button class="role-card pupil-role" data-go="pick-name" type="button">
+            <span class="role-icon"><svg class="icon icon-lg"><use href="#i-book"/></svg></span>
+            <span><strong>I'm a Pupil</strong><small>Pick your name and start reading</small></span>
+            <svg class="icon"><use href="#i-arrow"/></svg>
+          </button>
+          <button class="role-card teacher-role" data-go="class-view" type="button">
+            <span class="role-icon"><svg class="icon icon-lg"><use href="#i-class"/></svg></span>
+            <span><strong>Teacher / Parent</strong><small>See the latest class results</small></span>
+            <svg class="icon"><use href="#i-arrow"/></svg>
+          </button>
+        </div>
+        <div class="offline-badge">
+          <svg class="icon"><use href="#i-check"/></svg>
+          <span><strong>Works offline</strong><small>No internet or phone needed · Voice deleted after checking</small></span>
+        </div>
+      </div>
+      <div class="home-mascot">
+        <div class="mascot-speech"><span>Dindin says</span><strong>Let's read together!</strong></div>
+        <div class="sun-shape"></div>
+        <!-- Dindin idling: the designer's ElephantIdle component as plain SVG (animations in styles.css) -->
+        <div class="ele-wrap">
+          <svg role="img" aria-label="Friendly elephant mascot in a school uniform, gently idling" fill="none" viewBox="0 0 400 400">
+            <rect fill="#E5E1D8" height="14" rx="7" width="184" x="108" y="352"/>
+            <g class="ele-twinkle"><rect fill="#FFC800" height="13" rx="2" transform="rotate(45 330 64)" width="13" x="324" y="58"/></g>
+            <g class="ele-twinkle" style="animation-delay:.8s"><rect fill="#FF9FBF" height="13" rx="2" transform="rotate(45 56 58)" width="13" x="50" y="52"/></g>
+            <g class="ele-twinkle" style="animation-delay:1.5s"><rect fill="#8FD6FF" height="9" rx="2" transform="rotate(45 356 108)" width="9" x="352" y="104"/></g>
+            <ellipse cx="156" cy="346" fill="#2B2B33" rx="30" ry="16"/><ellipse cx="244" cy="346" fill="#2B2B33" rx="30" ry="16"/>
+            <g class="ele-breathe">
+              <ellipse cx="200" cy="270" fill="#2B3A67" rx="95" ry="88"/><path d="M168 258 L232 258 L200 334 Z" fill="#FFFFFF"/><path d="M192 270 L208 270 L214 326 L200 340 L186 326 Z" fill="#E5484D"/><circle cx="226" cy="320" fill="#FFC800" r="4.5"/><circle cx="226" cy="338" fill="#FFC800" r="4.5"/><path d="M140 296 h22 v14 q0 9 -11 13 q-11 -4 -11 -13 Z" fill="#FFC800"/>
+              <g class="ele-armL"><ellipse cx="110" cy="282" fill="#2B3A67" rx="17" ry="34" transform="rotate(14 110 282)"/><circle cx="103" cy="314" fill="#46AEF7" r="13"/></g>
+              <g class="ele-armR"><ellipse cx="290" cy="282" fill="#2B3A67" rx="17" ry="34" transform="rotate(-14 290 282)"/><circle cx="297" cy="314" fill="#46AEF7" r="13"/></g>
+              <g class="ele-head">
+                <g class="ele-earL"><circle cx="80" cy="152" fill="#2A8BE0" r="58"/><circle cx="86" cy="156" fill="#FFA9C4" r="36"/></g>
+                <g class="ele-earR"><circle cx="320" cy="152" fill="#2A8BE0" r="58"/><circle cx="314" cy="156" fill="#FFA9C4" r="36"/></g>
+                <rect fill="#46AEF7" height="190" rx="88" width="220" x="90" y="70"/>
+                <g class="ele-tuft"><circle cx="188" cy="72" fill="#2A8BE0" r="11"/><circle cx="212" cy="72" fill="#2A8BE0" r="11"/><circle cx="200" cy="64" fill="#2A8BE0" r="12"/></g>
+                <rect fill="#62BDFB" height="82" rx="41" width="176" x="112" y="112"/><ellipse cx="128" cy="198" fill="#FFA9C4" opacity=".85" rx="13" ry="8"/><ellipse cx="272" cy="198" fill="#FFA9C4" opacity=".85" rx="13" ry="8"/><ellipse cx="168" cy="214" fill="#FFF6DC" rx="9" ry="20" transform="rotate(18 168 214)"/><ellipse cx="234" cy="208" fill="#FFF6DC" rx="9" ry="20" transform="rotate(-18 234 208)"/>
+                <g class="ele-blinkL"><circle cx="160" cy="152" fill="#FFFFFF" r="25"/><g class="ele-look"><ellipse cx="167" cy="156" fill="#2B2B33" rx="12" ry="15"/><circle cx="171" cy="150" fill="#FFFFFF" r="4.5"/></g></g>
+                <g class="ele-blinkR"><circle cx="240" cy="152" fill="#FFFFFF" r="25"/><g class="ele-look"><ellipse cx="247" cy="156" fill="#2B2B33" rx="12" ry="15"/><circle cx="251" cy="150" fill="#FFFFFF" r="4.5"/></g></g>
+                <g class="ele-trunk"><path d="M200 176 V232 C200 264 244 264 244 232" stroke="#8FD6FF" stroke-linecap="round" stroke-linejoin="round" stroke-width="42"/><path d="M186 198 q14 8 28 0 M186 214 q14 8 28 0" stroke="#5BB6F8" stroke-linecap="round" stroke-width="4"/></g>
+              </g>
+            </g>
+          </svg>
+        </div>
+      </div>
     </div>
   </section>
 
   <!-- Pick Your Name (pupil) -->
   <section id="pick-name" class="screen">
-    <header class="bar"><button class="btn btn-back" data-go="home">Back</button><h2>Who is reading?</h2></header>
-    <div id="name-tiles" class="tiles"></div>
+    <div class="choice-page">
+      <div class="choice-head">
+        <button class="button button-quiet button-small" data-go="home">Back</button>
+        <div class="page-heading"><span class="eyebrow">Hello, reader!</span><h1>Pick your name</h1></div>
+        <p class="choice-sub">Tap your name to begin.</p>
+      </div>
+      <div id="name-tiles" class="name-grid"></div>
+    </div>
   </section>
 
   <!-- Pick a Story (pupil) -->
   <section id="pick-story" class="screen">
-    <header class="bar"><button class="btn btn-back" data-go="pick-name">Back</button><h2>Pick a story, <span class="pupil-name"></span>!</h2></header>
-    <div id="story-cards" class="tiles"></div>
+    <div class="choice-page story-choice-page">
+      <div class="choice-head">
+        <button class="button button-quiet button-small" data-go="pick-name">Back</button>
+        <div class="page-heading"><span class="eyebrow"><span>Hi, <span class="pupil-name"></span>!</span></span><h1>Pick a story</h1></div>
+        <p class="choice-sub">Which one would you like to read today?</p>
+      </div>
+      <div id="story-cards" class="story-choice-grid"></div>
+    </div>
   </section>
 
   <!-- Read Aloud (pupil) -->
