@@ -4,146 +4,559 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Dinig</title>
-  <link rel="icon" href="data:,">
-  <!-- TODO [FRONTEND]: real Dinig icon (designer) -->
-  <!-- TODO [FRONTEND]: My Result must fit 1366x768 without scrolling (Next button is below the fold now). -->
-  <!-- TODO [FRONTEND]: Pick Your Name with 40 pupils: smaller tiles or class numbers so the class fits one screen. -->
-  <!-- TODO [FRONTEND]: Class View heatmap: put the "–" blanks on the left (oldest side) so the newest reading is always the last cell. -->
-  <!-- TODO [FRONTEND]: Story Quiz screen is very bare; show the story title or picture (designer screens). -->
-  <!-- Everything is local: no CDN, no Google Fonts. Fonts live in /fonts/. -->
+  <!-- Favicon: Dinig logo mark -->
+  <link rel="icon" type="image/svg+xml" href="assets/logo.svg">
+  <!-- Fonts: Nunito (headings/buttons) + Inter (body), bundled in fonts/ (no CDN, works offline). -->
   <link rel="stylesheet" href="styles.css">
 </head>
-<body class="pupil">
+<body>
 
-  <!-- Home (both modes) -->
+  <!-- ═══════════════════════════════════════════════════════
+       HOME (both modes)
+       Two-column hero: left = copy + role cards, right = mascot card
+       ═══════════════════════════════════════════════════════ -->
   <section id="home" class="screen active">
-    <div class="home-wrap">
-      <h1 class="logo">Dinig</h1>
-      <p class="tagline">Read aloud. Dinig listens.</p>
-      <div class="big-buttons">
-        <button class="btn btn-big" data-go="pick-name">I'm a Pupil</button>
-        <button class="btn btn-big btn-secondary" data-go="class-view">Teacher / Parent</button>
+    <header class="home-topbar">
+      <a class="brand" href="#" aria-label="Dinig home">
+        <img src="assets/logo.svg" alt="Dinig" width="74" height="48">
+      </a>
+      <div class="topbar-actions">
+        <span class="offline-pill"><i></i>Ready on this laptop</span>
       </div>
-      <p class="badges">
-        <span class="badge">No internet or phone needed</span>
-        <span class="badge">Voice deleted after checking</span>
-      </p>
-      <p class="status"><span id="status-dot" class="dot"></span> <span id="status-text">Checking...</span></p>
-    </div>
-  </section>
-
-  <!-- Pick Your Name (pupil) -->
-  <section id="pick-name" class="screen">
-    <header class="bar"><button class="btn btn-back" data-go="home">Back</button><h2>Who is reading?</h2></header>
-    <div id="name-tiles" class="tiles"></div>
-  </section>
-
-  <!-- Pick a Story (pupil) -->
-  <section id="pick-story" class="screen">
-    <header class="bar"><button class="btn btn-back" data-go="pick-name">Back</button><h2>Pick a story, <span class="pupil-name"></span>!</h2></header>
-    <div id="story-cards" class="tiles"></div>
-  </section>
-
-  <!-- Read Aloud (pupil) -->
-  <section id="read-aloud" class="screen">
-    <header class="bar"><button class="btn btn-back" id="read-back">Back</button><h2 id="story-title"></h2></header>
-    <p id="placeholder-note" class="note hidden">Placeholder story: the team will replace this text.</p>
-    <div id="story-text" class="story"></div>
-    <div class="read-controls">
-      <div id="listening" class="listening hidden"><span class="mic-pulse"></span> I'm listening...</div>
-      <div id="timer" class="timer">0:00</div>
-      <button id="read-btn" class="btn btn-big">Start</button>
-    </div>
-    <p id="mic-error" class="note hidden"></p>
-  </section>
-
-  <!-- Checking (pupil) -->
-  <section id="checking" class="screen">
-    <div class="center">
-      <div class="spinner"></div>
-      <p class="big-text">Listening to your reading...</p>
-    </div>
-  </section>
-
-  <!-- My Result (pupil) -->
-  <section id="my-result" class="screen">
-    <header class="bar"><h2 id="result-message">Great reading!</h2></header>
-    <div class="score-row">
-      <div class="score" id="result-score"></div>
-      <div class="time" id="result-time"></div>
-    </div>
-    <div id="result-words" class="story result"></div>
-    <ul class="legend">
-      <li><span class="w w-green">word</span> ✓ correct</li>
-      <li><span class="w w-red">word</span> practice word</li>
-      <li><span class="w w-grey">word</span> skipped</li>
-    </ul>
-    <div class="actions"><button class="btn btn-big" id="result-next">Next</button></div>
-  </section>
-
-  <!-- Story Quiz (pupil) -->
-  <section id="story-quiz" class="screen">
-    <header class="bar"><h2>Story Quiz <span id="quiz-count" class="muted"></span></h2></header>
-    <p id="quiz-question" class="question"></p>
-    <div class="read-controls">
-      <div id="quiz-listening" class="listening hidden"><span class="mic-pulse"></span> I'm listening...</div>
-      <button id="quiz-btn" class="btn btn-big">Answer</button>
-    </div>
-    <p id="quiz-feedback" class="feedback hidden"></p>
-    <div class="actions"><button class="btn btn-big hidden" id="quiz-next">Next</button></div>
-  </section>
-
-  <!-- Practice Again (pupil) -->
-  <section id="practice-again" class="screen">
-    <header class="bar"><h2>Practice Again</h2></header>
-    <div id="practice-sentences" class="story practice"></div>
-    <div class="read-controls">
-      <div id="practice-listening" class="listening hidden"><span class="mic-pulse"></span> I'm listening...</div>
-      <button id="practice-btn" class="btn btn-big">Start</button>
-    </div>
-    <p id="practice-result" class="feedback hidden"></p>
-    <div class="actions"><button class="btn btn-big hidden" id="practice-next">Next</button></div>
-  </section>
-
-  <!-- All Done (pupil) -->
-  <section id="all-done" class="screen">
-    <div class="center">
-      <div class="stars">★ ★ ★</div>
-      <p class="big-text">Great reading, <span class="pupil-name"></span>!</p>
-      <div class="big-buttons">
-        <button class="btn btn-big" data-go="pick-name">Next Reader</button>
-        <button class="btn btn-big btn-secondary" data-go="home">Home</button>
-      </div>
-    </div>
-  </section>
-
-  <!-- Class View (teacher / parent) -->
-  <section id="class-view" class="screen">
-    <header class="bar">
-      <button class="btn btn-back" data-go="home">Home</button>
-      <h2>Class View <span class="badge">Sample class</span></h2>
-      <span class="status small"><span id="status-dot-2" class="dot"></span> <span id="status-text-2"></span></span>
     </header>
-    <div class="class-tools">
-      <label>Sort:
-        <select id="sort-select">
-          <option value="newest">Newest first</option>
-          <option value="help">Needs help first</option>
-        </select>
-      </label>
-      <form id="add-pupil" class="add-pupil">
-        <input name="first_name" placeholder="First name or class no." required maxlength="40">
-        <select name="grade"><option value="3">Grade 3</option><option value="4">Grade 4</option></select>
-        <button class="btn btn-small" type="submit">Add Pupil</button>
-      </form>
+
+    <div class="home-hero">
+      <!-- Left: copy -->
+      <div class="home-copy">
+        <span class="eyebrow">
+          <svg aria-hidden="true" class="icon" width="18" height="18" viewBox="0 0 24 24" fill="none"><g stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="m12 3 1.2 3.8L17 8l-3.8 1.2L12 13l-1.2-3.8L7 8l3.8-1.2z"/><path d="m19 14 .7 2.3L22 17l-2.3.7L19 20l-.7-2.3L16 17l2.3-.7z"/></g></svg>
+          Your friendly reading buddy
+        </span>
+        <h1>Who is using Dinig?</h1>
+        <p>Choose where you want to go. No account or internet needed.</p>
+
+        <div class="home-actions">
+          <button class="role-card pupil-role" data-go="pick-name">
+            <span class="role-icon">
+              <svg aria-hidden="true" class="icon" width="30" height="30" viewBox="0 0 24 24" fill="none"><g stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H11v16H6.5A2.5 2.5 0 0 0 4 21.5z"/><path d="M20 5.5A2.5 2.5 0 0 0 17.5 3H13v16h4.5a2.5 2.5 0 0 1 2.5 2.5z"/></g></svg>
+            </span>
+            <span>
+              <strong>I'm a Pupil</strong>
+              <small>Pick your name and start reading</small>
+            </span>
+            <svg aria-hidden="true" class="icon" width="22" height="22" viewBox="0 0 24 24" fill="none"><g stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="m9 18 6-6-6-6"/></g></svg>
+          </button>
+
+          <button class="role-card teacher-role" data-go="class-view">
+            <span class="role-icon">
+              <svg aria-hidden="true" class="icon" width="30" height="30" viewBox="0 0 24 24" fill="none"><g stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6M15 15c3 0 5 2.2 5 5"/></g></svg>
+            </span>
+            <span>
+              <strong>Teacher / Parent</strong>
+              <small>See the latest class results</small>
+            </span>
+            <svg aria-hidden="true" class="icon" width="22" height="22" viewBox="0 0 24 24" fill="none"><g stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="m9 18 6-6-6-6"/></g></svg>
+          </button>
+        </div>
+
+        <div class="offline-badge">
+          <svg aria-hidden="true" class="icon" width="19" height="19" viewBox="0 0 24 24" fill="none"><g stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="m5 12 4 4L19 6"/></g></svg>
+          <span>
+            <strong>Works offline</strong>
+            <small>No internet or phone needed</small>
+          </span>
+        </div>
+      </div>
+
+      <!-- Right: mascot card -->
+      <div class="home-mascot">
+        <div class="mascot-speech">
+          <span>Dindin says</span>
+          <strong>Let's read together!</strong>
+        </div>
+        <div class="sun-shape"></div>
+        <!-- Animated elephant (inline SVG, no build step needed) -->
+        <div class="ele-wrap" id="elephant-home" aria-label="Friendly elephant mascot" role="img">
+          <style>
+            .ele-breathe{transform-origin:200px 358px;animation:ele-breathe 3.6s ease-in-out infinite}
+            .ele-head{transform-origin:200px 255px;animation:ele-tilt 7s ease-in-out infinite}
+            .ele-earL{transform-origin:105px 160px;animation:ele-earL 6s ease-in-out infinite}
+            .ele-earR{transform-origin:295px 160px;animation:ele-earR 6s ease-in-out .12s infinite}
+            .ele-trunk{transform-origin:200px 176px;animation:ele-trunk 4.2s ease-in-out infinite}
+            .ele-tuft{transform-origin:200px 78px;animation:ele-tuft 2.8s ease-in-out infinite alternate}
+            .ele-armL{transform-origin:115px 252px;animation:ele-armL 3.6s ease-in-out infinite}
+            .ele-armR{transform-origin:285px 252px;animation:ele-armR 3.6s ease-in-out infinite}
+            .ele-blinkL{transform-origin:160px 152px;animation:ele-blink 5s infinite}
+            .ele-blinkR{transform-origin:240px 152px;animation:ele-blink 5s infinite}
+            .ele-look{animation:ele-look 9s ease-in-out infinite}
+            .ele-twinkle{transform-box:fill-box;transform-origin:center;animation:ele-twinkle 2.4s ease-in-out infinite}
+            @keyframes ele-breathe{0%,100%{transform:scale(1,1)}50%{transform:scale(1.012,1.026)}}
+            @keyframes ele-tilt{0%,100%{transform:rotate(-1.6deg)}50%{transform:rotate(1.6deg)}}
+            @keyframes ele-earL{0%,60%,100%{transform:rotate(0)}66%{transform:rotate(-10deg)}72%{transform:rotate(3deg)}78%{transform:rotate(-6deg)}86%{transform:rotate(0)}}
+            @keyframes ele-earR{0%,60%,100%{transform:rotate(0)}66%{transform:rotate(10deg)}72%{transform:rotate(-3deg)}78%{transform:rotate(6deg)}86%{transform:rotate(0)}}
+            @keyframes ele-trunk{0%,100%{transform:rotate(-3deg)}50%{transform:rotate(4deg)}}
+            @keyframes ele-tuft{from{transform:rotate(-4deg)}to{transform:rotate(4deg)}}
+            @keyframes ele-armL{0%,100%{transform:rotate(0)}50%{transform:rotate(3deg)}}
+            @keyframes ele-armR{0%,100%{transform:rotate(0)}50%{transform:rotate(-3deg)}}
+            @keyframes ele-blink{0%,90%,100%{transform:scaleY(1)}93%{transform:scaleY(.08)}96%{transform:scaleY(1)}}
+            @keyframes ele-look{0%,15%,100%{transform:translate(0,0)}25%,40%{transform:translate(3px,-1px)}55%,70%{transform:translate(-3px,1px)}}
+            @keyframes ele-twinkle{0%,100%{transform:scale(.6);opacity:.5}50%{transform:scale(1);opacity:1}}
+            @media (prefers-reduced-motion:reduce){.ele-wrap *{animation:none!important}}
+          </style>
+          <svg aria-hidden="true" fill="none" style="width:100%;height:100%;overflow:visible" viewBox="0 0 400 400">
+            <rect fill="#E5E1D8" height="14" rx="7" width="184" x="108" y="352"/>
+            <g class="ele-twinkle"><rect fill="#FFC800" height="13" rx="2" transform="rotate(45 330 64)" width="13" x="324" y="58"/></g>
+            <g class="ele-twinkle" style="animation-delay:.8s"><rect fill="#FF9FBF" height="13" rx="2" transform="rotate(45 56 58)" width="13" x="50" y="52"/></g>
+            <g class="ele-twinkle" style="animation-delay:1.5s"><rect fill="#8FD6FF" height="9" rx="2" transform="rotate(45 356 108)" width="9" x="352" y="104"/></g>
+            <ellipse cx="156" cy="346" fill="#2B2B33" rx="30" ry="16"/><ellipse cx="244" cy="346" fill="#2B2B33" rx="30" ry="16"/>
+            <g class="ele-breathe">
+              <ellipse cx="200" cy="270" fill="#2B3A67" rx="95" ry="88"/>
+              <path d="M168 258 L232 258 L200 334 Z" fill="#FFFFFF"/>
+              <path d="M192 270 L208 270 L214 326 L200 340 L186 326 Z" fill="#E5484D"/>
+              <circle cx="226" cy="320" fill="#FFC800" r="4.5"/><circle cx="226" cy="338" fill="#FFC800" r="4.5"/>
+              <path d="M140 296 h22 v14 q0 9 -11 13 q-11 -4 -11 -13 Z" fill="#FFC800"/>
+              <g class="ele-armL"><ellipse cx="110" cy="282" fill="#2B3A67" rx="17" ry="34" transform="rotate(14 110 282)"/><circle cx="103" cy="314" fill="#46AEF7" r="13"/></g>
+              <g class="ele-armR"><ellipse cx="290" cy="282" fill="#2B3A67" rx="17" ry="34" transform="rotate(-14 290 282)"/><circle cx="297" cy="314" fill="#46AEF7" r="13"/></g>
+              <g class="ele-head">
+                <g class="ele-earL"><circle cx="80" cy="152" fill="#2A8BE0" r="58"/><circle cx="86" cy="156" fill="#FFA9C4" r="36"/></g>
+                <g class="ele-earR"><circle cx="320" cy="152" fill="#2A8BE0" r="58"/><circle cx="314" cy="156" fill="#FFA9C4" r="36"/></g>
+                <rect fill="#46AEF7" height="190" rx="88" width="220" x="90" y="70"/>
+                <g class="ele-tuft"><circle cx="188" cy="72" fill="#2A8BE0" r="11"/><circle cx="212" cy="72" fill="#2A8BE0" r="11"/><circle cx="200" cy="64" fill="#2A8BE0" r="12"/></g>
+                <rect fill="#62BDFB" height="82" rx="41" width="176" x="112" y="112"/>
+                <ellipse cx="128" cy="198" fill="#FFA9C4" opacity=".85" rx="13" ry="8"/>
+                <ellipse cx="272" cy="198" fill="#FFA9C4" opacity=".85" rx="13" ry="8"/>
+                <ellipse cx="168" cy="214" fill="#FFF6DC" rx="9" ry="20" transform="rotate(18 168 214)"/>
+                <ellipse cx="234" cy="208" fill="#FFF6DC" rx="9" ry="20" transform="rotate(-18 234 208)"/>
+                <g class="ele-blinkL"><circle cx="160" cy="152" fill="#FFFFFF" r="25"/><g class="ele-look"><ellipse cx="167" cy="156" fill="#2B2B33" rx="12" ry="15"/><circle cx="171" cy="150" fill="#FFFFFF" r="4.5"/></g></g>
+                <g class="ele-blinkR"><circle cx="240" cy="152" fill="#FFFFFF" r="25"/><g class="ele-look"><ellipse cx="247" cy="156" fill="#2B2B33" rx="12" ry="15"/><circle cx="251" cy="150" fill="#FFFFFF" r="4.5"/></g></g>
+                <g class="ele-trunk">
+                  <path d="M200 176 V232 C200 264 244 264 244 232" stroke="#8FD6FF" stroke-linecap="round" stroke-linejoin="round" stroke-width="42"/>
+                  <path d="M186 198 q14 8 28 0 M186 214 q14 8 28 0" stroke="#5BB6F8" stroke-linecap="round" stroke-width="4"/>
+                </g>
+              </g>
+            </g>
+          </svg>
+        </div>
+      </div>
     </div>
-    <div class="class-grid">
-      <table class="class-table">
-        <thead><tr><th>Pupil</th><th>Latest score</th><th>Time</th><th>Trouble words</th><th>Tip</th><th>Last 5 readings</th></tr></thead>
-        <tbody id="class-rows"></tbody>
-      </table>
+
+    <!-- Model status (small, bottom of home) -->
+    <p class="home-status"><span id="status-dot" class="dot"></span> <span id="status-text">Checking...</span></p>
+  </section>
+
+
+  <!-- ═══════════════════════════════════════════════════════
+       SHARED SHELL: used by all pupil screens after Home
+       Injected via JS: topbar with logo + step bar + offline pill
+       ═══════════════════════════════════════════════════════ -->
+
+  <!-- Pick Your Name -->
+  <section id="pick-name" class="screen">
+    <header class="topbar">
+      <button class="brand" data-go="home" aria-label="Go to home">
+        <img src="assets/logo.svg" alt="Dinig" width="74" height="48">
+      </button>
+      <div class="stepper" id="stepper-pick-name" aria-label="Step 1 of 8">
+        <span>Step 1 of 8</span>
+        <div><i style="width:12.5%"></i></div>
+      </div>
+      <div class="topbar-actions">
+        <span class="offline-pill"><i></i>Works offline</span>
+      </div>
+    </header>
+    <section class="choice-page">
+      <div class="page-heading">
+        <span class="eyebrow">Hello, reader!</span>
+        <h1>Pick your name</h1>
+        <p>Tap your name to begin.</p>
+      </div>
+      <div id="name-tiles" class="name-grid"></div>
+    </section>
+  </section>
+
+
+  <!-- Pick a Story -->
+  <section id="pick-story" class="screen">
+    <header class="topbar">
+      <button class="brand" data-go="home" aria-label="Go to home">
+        <img src="assets/logo.svg" alt="Dinig" width="74" height="48">
+      </button>
+      <div class="stepper" aria-label="Step 2 of 8">
+        <span>Step 2 of 8</span>
+        <div><i style="width:25%"></i></div>
+      </div>
+      <div class="topbar-actions">
+        <span class="offline-pill"><i></i>Works offline</span>
+      </div>
+    </header>
+    <section class="choice-page story-choice-page">
+      <div class="page-heading">
+        <span class="eyebrow"><span>Hi, <span class="pupil-name"></span>!</span></span>
+        <h1>Pick a story</h1>
+        <p>Which one would you like to read today?</p>
+      </div>
+      <div id="story-cards" class="story-choice-grid"></div>
+    </section>
+  </section>
+
+
+  <!-- Read Aloud -->
+  <section id="read-aloud" class="screen">
+    <header class="topbar">
+      <button class="brand" id="read-back" aria-label="Go to home">
+        <img src="assets/logo.svg" alt="Dinig" width="74" height="48">
+      </button>
+      <div class="stepper" aria-label="Step 3 of 8">
+        <span>Step 3 of 8</span>
+        <div><i style="width:37.5%"></i></div>
+      </div>
+      <div class="topbar-actions">
+        <span class="offline-pill"><i></i>Works offline</span>
+      </div>
+    </header>
+    <div class="reader-layout">
+      <!-- Left: story card -->
+      <article class="reading-card">
+        <div class="reading-meta">
+          <span>
+            <svg aria-hidden="true" class="icon" width="18" height="18" viewBox="0 0 24 24" fill="none"><g stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H11v16H6.5A2.5 2.5 0 0 0 4 21.5z"/><path d="M20 5.5A2.5 2.5 0 0 0 17.5 3H13v16h4.5a2.5 2.5 0 0 1 2.5 2.5z"/></g></svg>
+            <span id="story-title"></span>
+          </span>
+          <span id="timer-badge">
+            <svg aria-hidden="true" class="icon" width="17" height="17" viewBox="0 0 24 24" fill="none"><g stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></g></svg>
+            <span id="timer">0:00</span>
+          </span>
+        </div>
+        <p id="story-text" class="reading-passage story"></p>
+        <div class="reading-help">
+          <svg aria-hidden="true" class="icon" width="18" height="18" viewBox="0 0 24 24" fill="none"><g stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><rect x="8" y="3" width="8" height="12" rx="4"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></g></svg>
+          <span>
+            <strong id="read-help-main">Ready, <span class="pupil-name"></span>?</strong>
+            <small>Your voice stays on this laptop</small>
+          </span>
+        </div>
+        <p id="placeholder-note" class="note hidden">Placeholder story — the team will replace this text.</p>
+        <p id="mic-error" class="note hidden"></p>
+      </article>
+      <!-- Right: mascot buddy -->
+      <aside class="reader-buddy">
+        <div class="dindin-expression dindin-reading" id="read-mascot" aria-label="Dindin is listening"></div>
+        <div class="reader-prompt">
+          <strong id="read-prompt-main">Read when you're ready.</strong>
+          <span id="read-prompt-sub">The words will be checked after you finish.</span>
+        </div>
+        <button id="read-btn" class="btn btn-blue read-action">
+          <svg aria-hidden="true" class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none"><g stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><rect x="8" y="3" width="8" height="12" rx="4"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></g></svg>
+          Start
+        </button>
+      </aside>
     </div>
-    <p class="muted small">Heatmap: green 90%+ · amber 75–89% · red below 75% (needs help) · – no reading yet.</p>
+  </section>
+
+
+  <!-- Checking -->
+  <section id="checking" class="screen">
+    <header class="topbar">
+      <button class="brand" data-go="home" aria-label="Go to home">
+        <img src="assets/logo.svg" alt="Dinig" width="74" height="48">
+      </button>
+      <div class="stepper" aria-label="Step 4 of 8">
+        <span>Step 4 of 8</span>
+        <div><i style="width:50%"></i></div>
+      </div>
+      <div class="topbar-actions">
+        <span class="offline-pill"><i></i>Works offline</span>
+      </div>
+    </header>
+    <section class="center-stage checking-stage">
+      <div class="checking-mascot">
+        <div class="dindin-expression dindin-thinking" aria-label="Dindin is thinking"></div>
+      </div>
+      <span class="loading-dots"><i></i><i></i><i></i></span>
+      <h1>Listening to your reading...</h1>
+      <p>Dindin is checking the words after your reading.</p>
+      <div class="privacy-chip">
+        <svg aria-hidden="true" class="icon" width="17" height="17" viewBox="0 0 24 24" fill="none"><g stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="m5 12 4 4L19 6"/></g></svg>
+        Everything stays on this laptop
+      </div>
+    </section>
+  </section>
+
+
+  <!-- My Result -->
+  <section id="my-result" class="screen">
+    <header class="topbar">
+      <button class="brand" data-go="home" aria-label="Go to home">
+        <img src="assets/logo.svg" alt="Dinig" width="74" height="48">
+      </button>
+      <div class="stepper" aria-label="Step 5 of 8">
+        <span>Step 5 of 8</span>
+        <div><i style="width:62.5%"></i></div>
+      </div>
+      <div class="topbar-actions">
+        <span class="offline-pill"><i></i>Works offline</span>
+      </div>
+    </header>
+    <section class="result-page">
+      <div class="result-heading">
+        <div>
+          <span class="eyebrow">My Result</span>
+          <h1 id="result-score"></h1>
+          <p id="result-message"></p>
+        </div>
+        <div class="time-card">
+          <svg aria-hidden="true" class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none"><g stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></g></svg>
+          <span>
+            <small>Reading time</small>
+            <strong id="result-time"></strong>
+          </span>
+        </div>
+      </div>
+
+      <article class="word-result-card">
+        <div class="word-legend">
+          <span><i class="correct-dot"></i>Correct</span>
+          <span><i class="practice-dot"></i>Practice word</span>
+          <span><i class="skipped-dot"></i>Skipped</span>
+        </div>
+        <p id="result-words" class="marked-passage story result"></p>
+      </article>
+
+      <div class="result-footer">
+        <div class="dindin-mini">
+          <div class="dindin-expression dindin-encouraging" id="result-mascot" aria-label="Dindin is encouraging"></div>
+          <span>
+            <strong id="result-cheer">You kept going!</strong>
+            <small>Let's talk about the story.</small>
+          </span>
+        </div>
+        <button class="btn btn-green" id="result-next">
+          Start story quiz
+          <svg aria-hidden="true" class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none"><g stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="m9 18 6-6-6-6"/></g></svg>
+        </button>
+      </div>
+    </section>
+  </section>
+
+
+  <!-- Story Quiz -->
+  <section id="story-quiz" class="screen">
+    <header class="topbar">
+      <button class="brand" data-go="home" aria-label="Go to home">
+        <img src="assets/logo.svg" alt="Dinig" width="74" height="48">
+      </button>
+      <div class="stepper" aria-label="Step 6 of 8">
+        <span>Step 6 of 8</span>
+        <div><i style="width:75%"></i></div>
+      </div>
+      <div class="topbar-actions">
+        <span class="offline-pill"><i></i>Works offline</span>
+      </div>
+    </header>
+    <div class="quiz-layout">
+      <!-- Left: quiz card -->
+      <article class="quiz-card">
+        <span class="eyebrow" id="quiz-eyebrow">Story Quiz · Question 1 of 2</span>
+        <span class="question-number" id="quiz-num">1</span>
+        <h1 id="quiz-question"></h1>
+        <p>Say your answer out loud, then tap the button.</p>
+
+        <div class="voice-box" id="voice-box">
+          <span class="voice-icon" id="voice-icon">
+            <svg aria-hidden="true" class="icon" width="22" height="22" viewBox="0 0 24 24" fill="none"><g stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><rect x="8" y="3" width="8" height="12" rx="4"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></g></svg>
+          </span>
+          <span>
+            <strong id="voice-main">Tap Answer, then say it out loud.</strong>
+            <small id="voice-sub">Speak clearly when you're ready.</small>
+          </span>
+        </div>
+
+        <div class="encouragement hidden" id="quiz-feedback"></div>
+
+        <button id="quiz-btn" class="btn btn-blue">
+          <svg aria-hidden="true" class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none"><g stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><rect x="8" y="3" width="8" height="12" rx="4"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></g></svg>
+          Answer
+        </button>
+        <button id="quiz-next" class="btn btn-green hidden">
+          <span id="quiz-next-label">Next question</span>
+          <svg aria-hidden="true" class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none"><g stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="m9 18 6-6-6-6"/></g></svg>
+        </button>
+      </article>
+
+      <!-- Right: mascot -->
+      <aside class="quiz-mascot">
+        <div class="dindin-expression dindin-thinking" id="quiz-mascot" aria-label="Dindin is thinking"></div>
+        <div>
+          <strong id="quiz-mascot-msg">I'm listening.</strong>
+          <span>There are no tricky answers here.</span>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+
+  <!-- Practice Again -->
+  <section id="practice-again" class="screen">
+    <header class="topbar">
+      <button class="brand" data-go="home" aria-label="Go to home">
+        <img src="assets/logo.svg" alt="Dinig" width="74" height="48">
+      </button>
+      <div class="stepper" aria-label="Step 7 of 8">
+        <span>Step 7 of 8</span>
+        <div><i style="width:87.5%"></i></div>
+      </div>
+      <div class="topbar-actions">
+        <span class="offline-pill"><i></i>Works offline</span>
+      </div>
+    </header>
+    <div class="practice-layout">
+      <div class="practice-heading">
+        <span class="eyebrow">Practice Again</span>
+        <h1>Let's try some short sentences.</h1>
+        <p>Read each one out loud.</p>
+      </div>
+      <div class="practice-content">
+        <div id="practice-sentences" class="practice-sentences"></div>
+        <aside class="practice-aside">
+          <div class="dindin-expression dindin-retry" id="practice-mascot" aria-label="Dindin is ready to retry"></div>
+          <div class="practice-change hidden" id="practice-result-box">
+            <span><small>Before</small><strong id="practice-before">—</strong></span>
+            <svg aria-hidden="true" class="icon" width="18" height="18" viewBox="0 0 24 24" fill="none"><g stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="m9 18 6-6-6-6"/></g></svg>
+            <span><small>Now</small><strong id="practice-after">—</strong></span>
+          </div>
+        </aside>
+      </div>
+      <div class="practice-footer">
+        <span>
+          <svg aria-hidden="true" class="icon" width="18" height="18" viewBox="0 0 24 24" fill="none"><g stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="m12 3 1.2 3.8L17 8l-3.8 1.2L12 13l-1.2-3.8L7 8l3.8-1.2z"/><path d="m19 14 .7 2.3L22 17l-2.3.7L19 20l-.7-2.3L16 17l2.3-.7z"/></g></svg>
+          These sentences were made on this laptop.
+        </span>
+        <div class="practice-actions">
+          <p id="practice-result" class="note hidden"></p>
+          <div id="practice-listening" class="listening hidden"><span class="mic-pulse"></span> Dindin is listening...</div>
+          <button id="practice-btn" class="btn btn-blue">
+            <svg aria-hidden="true" class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none"><g stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><rect x="8" y="3" width="8" height="12" rx="4"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></g></svg>
+            Start reading
+          </button>
+          <button id="practice-next" class="btn btn-green hidden">
+            All finished
+            <svg aria-hidden="true" class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none"><g stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="m9 18 6-6-6-6"/></g></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- All Done -->
+  <section id="all-done" class="screen">
+    <header class="topbar">
+      <button class="brand" data-go="home" aria-label="Go to home">
+        <img src="assets/logo.svg" alt="Dinig" width="74" height="48">
+      </button>
+      <div class="stepper" aria-label="Step 8 of 8">
+        <span>Step 8 of 8</span>
+        <div><i style="width:100%"></i></div>
+      </div>
+      <div class="topbar-actions">
+        <span class="offline-pill"><i></i>Works offline</span>
+      </div>
+    </header>
+    <section class="center-stage complete-stage">
+      <div class="celebration-lines"><i></i><i></i><i></i><i></i><i></i></div>
+      <div class="dindin-expression dindin-celebrating" aria-label="Dindin is celebrating"></div>
+      <span class="eyebrow">All Done</span>
+      <h1>Great reading, <span class="pupil-name"></span>!</h1>
+      <p>You read a whole story, answered questions, and practised your words.</p>
+      <div class="complete-stats">
+        <span>
+          <svg aria-hidden="true" class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none"><g stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="m5 12 4 4L19 6"/></g></svg>
+          <strong id="done-score">—</strong>
+          <small>words correct</small>
+        </span>
+        <span>
+          <svg aria-hidden="true" class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none"><g stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="m12 3 1.2 3.8L17 8l-3.8 1.2L12 13l-1.2-3.8L7 8l3.8-1.2z"/></g></svg>
+          <strong id="done-quiz">—</strong>
+          <small>quiz answers</small>
+        </span>
+      </div>
+      <button class="btn btn-blue" data-go="pick-name">
+        Next Reader
+        <svg aria-hidden="true" class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none"><g stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="m9 18 6-6-6-6"/></g></svg>
+      </button>
+    </section>
+  </section>
+
+
+  <!-- ═══════════════════════════════════════════════════════
+       CLASS VIEW (Teacher / Parent)
+       ═══════════════════════════════════════════════════════ -->
+  <section id="class-view" class="screen">
+    <header class="topbar">
+      <button class="brand" data-go="home" aria-label="Go to home">
+        <img src="assets/logo.svg" alt="Dinig" width="74" height="48">
+      </button>
+      <span></span><!-- no stepper in teacher mode -->
+      <div class="topbar-actions">
+        <span class="offline-pill"><i></i><span id="status-text-2">Checking...</span></span>
+        <span id="status-dot-2" class="dot" style="display:none"></span>
+      </div>
+    </header>
+
+    <section class="class-page">
+      <div class="class-heading">
+        <div>
+          <span class="sample-label">Sample class</span>
+          <h1>Class View</h1>
+          <p>Latest reading results from this laptop.</p>
+        </div>
+        <div class="class-tools">
+          <label class="sort-label">Sort:
+            <select id="sort-select" class="sort-select">
+              <option value="newest">Newest first</option>
+              <option value="help">Needs help first</option>
+            </select>
+          </label>
+          <form id="add-pupil" class="add-pupil-form">
+            <input name="first_name" placeholder="First name or class no." required maxlength="40">
+            <select name="grade"><option value="3">Grade 3</option><option value="4">Grade 4</option></select>
+            <button class="btn btn-quiet btn-small" type="submit">Add Pupil</button>
+          </form>
+          <button class="btn btn-quiet" data-go="home">
+            <svg aria-hidden="true" class="icon" width="18" height="18" viewBox="0 0 24 24" fill="none"><g stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="m3 11 9-8 9 8"/><path d="M5 10v11h14V10M9 21v-6h6v6"/></g></svg>
+            Home
+          </button>
+        </div>
+      </div>
+
+      <div class="class-summary">
+        <span><strong id="sum-pupils">–</strong><small>Pupils</small></span>
+        <span><strong id="sum-average">–</strong><small>Class average (latest reading)</small></span>
+        <span><strong id="sum-help">–</strong><small>May need help</small></span>
+      </div>
+
+      <section class="class-table-card">
+        <table>
+          <thead>
+            <tr>
+              <th>Pupil</th>
+              <th>Latest score</th>
+              <th>Time</th>
+              <th>Trouble words</th>
+              <th>Support</th>
+              <th>Tip</th>
+              <th>Last 5 readings</th>
+            </tr>
+          </thead>
+          <tbody id="class-rows"></tbody>
+        </table>
+        <p class="class-table-legend">Last 5 readings, newest on the right:
+          <span class="cell good">90</span> 90%+
+          <span class="cell almost">80</span> 75–89%
+          <span class="cell help">60</span> below 75%
+          <span class="cell none">–</span> no reading yet</p>
+      </section>
+    </section>
   </section>
 
   <script src="app.js"></script>

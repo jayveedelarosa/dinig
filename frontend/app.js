@@ -26,10 +26,51 @@ function el(tag, attrs = {}, text = "") {
   return node;
 }
 
+function escapeHtml(text) {
+  return String(text).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+}
+
 function formatTime(seconds) {
   const m = Math.floor(seconds / 60);
   const s = Math.round(seconds % 60);
   return `${m}:${String(s).padStart(2, "0")}`;
+}
+
+function formatLongTime(seconds) {
+  const m = Math.floor(seconds / 60);
+  const s = Math.round(seconds % 60);
+  return `${m} min ${String(s).padStart(2, "0")} sec`;
+}
+
+function initials(name) {
+  return name.split(/\s+/).filter(Boolean).map((w) => w[0]).join("").slice(0, 2).toUpperCase();
+}
+
+// Line icons from the Figma design (24x24, stroke = currentColor)
+const ICON_PATHS = {
+  arrow: '<path d="m9 18 6-6-6-6"/>',
+  book: '<path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H11v16H6.5A2.5 2.5 0 0 0 4 21.5z"/><path d="M20 5.5A2.5 2.5 0 0 0 17.5 3H13v16h4.5a2.5 2.5 0 0 1 2.5 2.5z"/>',
+  check: '<path d="m5 12 4 4L19 6"/>',
+  mic: '<rect x="8" y="3" width="8" height="12" rx="4"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/>',
+  sparkles: '<path d="m12 3 1.2 3.8L17 8l-3.8 1.2L12 13l-1.2-3.8L7 8l3.8-1.2z"/><path d="m19 14 .7 2.3L22 17l-2.3.7L19 20l-.7-2.3L16 17l2.3-.7z"/>',
+};
+
+function icon(name, size = 20) {
+  return `<svg aria-hidden="true" class="icon" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none"><g stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">${ICON_PATHS[name]}</g></svg>`;
+}
+
+// Sets a button's look: label, optional icon (before or after), and color.
+function setButton(btn, label, { iconName = null, after = false, color = "blue" } = {}) {
+  const i = iconName ? icon(iconName) : "";
+  btn.innerHTML = after ? `${escapeHtml(label)}${i}` : `${i}${escapeHtml(label)}`;
+  btn.classList.toggle("btn-blue", color === "blue");
+  btn.classList.toggle("btn-green", color === "green");
+}
+
+function setMood(node, mood) {
+  if (!node) return;
+  node.className = node.className.replace(/\bdindin-(encouraging|waving|celebrating|thinking|retry|reading)\b/g, "").trim();
+  node.classList.add(`dindin-${mood}`);
 }
 
 // ---------- Navigation ----------
@@ -46,7 +87,10 @@ function go(id) {
 
 document.addEventListener("click", (e) => {
   const target = e.target.closest("[data-go]");
-  if (target) go(target.dataset.go);
+  if (!target) return;
+  e.preventDefault();
+  if (target.dataset.go === "home") mic.cancel();
+  go(target.dataset.go);
 });
 
 // ---------- Home: model status from /health ----------
@@ -85,9 +129,14 @@ onEnter["pick-name"] = async () => {
   const box = $("#name-tiles");
   box.textContent = "";
   const pupils = await api("/pupils");
-  pupils.forEach((p) => {
-    const tile = el("button", { class: "tile" }, p.class_no ? `${p.first_name} (${p.class_no})` : p.first_name);
-    tile.appendChild(el("span", { class: "sub" }, `Grade ${p.grade}`));
+  // More than 9 pupils: compact tiles so a full class (40) fits on one screen
+  const compact = pupils.length > 9;
+  box.classList.toggle("tiles", compact);
+  pupils.forEach((p, idx) => {
+    const tile = el("button", { class: `name-tile name-${(idx % 6) + 1}${compact ? " tile" : ""}`, type: "button" });
+    const sub = p.class_no ? `No. ${p.class_no} · Grade ${p.grade}` : `Grade ${p.grade}`;
+    tile.innerHTML = `<span>${escapeHtml(initials(p.first_name))}</span>` +
+      `<strong>${escapeHtml(p.first_name)}<small>${escapeHtml(sub)}</small></strong>${icon("arrow", 22)}`;
     tile.addEventListener("click", () => { state.pupil = p; go("pick-story"); });
     box.appendChild(tile);
   });
@@ -95,13 +144,23 @@ onEnter["pick-name"] = async () => {
 
 // ---------- Pick a Story ----------
 
+const STORY_ART = ["meadow", "seed", "rain"];
+const LANGUAGES = { en: "English", fil: "Filipino" };
+
 onEnter["pick-story"] = async () => {
   const box = $("#story-cards");
   box.textContent = "";
   const stories = await api("/stories");
-  stories.forEach((s) => {
-    const tile = el("button", { class: "tile" }, s.title);
-    tile.appendChild(el("span", { class: "sub" }, `Grade ${s.grade_level}`));
+  stories.forEach((s, idx) => {
+    const tile = el("button", { class: "story-choice-card", type: "button" });
+    tile.innerHTML = `
+      <span class="story-art story-art-${STORY_ART[idx % STORY_ART.length]}">${icon("book", 42)}<i></i></span>
+      <span class="story-card-copy">
+        <small>Grade ${escapeHtml(s.grade_level)}</small>
+        <strong>${escapeHtml(s.title)}</strong>
+        <span>${escapeHtml(LANGUAGES[s.language] || s.language || "")}</span>
+      </span>
+      <span class="story-go">${icon("arrow", 22)}</span>`;
     tile.addEventListener("click", async () => {
       state.story = await api(`/stories/${s.id}`);
       go("read-aloud");
@@ -151,11 +210,14 @@ let startedAt = 0;
 
 function resetReadAloud(message = "") {
   clearInterval(timerId);
-  $("#read-btn").textContent = "Start";
-  $("#read-btn").disabled = false;
-  $("#read-btn").classList.remove("recording");
-  $("#listening").classList.add("hidden");
+  const btn = $("#read-btn");
+  setButton(btn, "Start", { iconName: "mic", color: "blue" });
+  btn.disabled = false;
+  btn.classList.remove("recording");
   $("#timer").textContent = "0:00";
+  $("#read-help-main").innerHTML = `Ready, <span class="pupil-name">${escapeHtml(state.pupil?.first_name || "")}</span>?`;
+  $("#read-prompt-main").textContent = "Read when you're ready.";
+  $("#read-prompt-sub").textContent = "The words will be checked after you finish.";
   $("#mic-error").textContent = message;
   $("#mic-error").classList.toggle("hidden", !message);
 }
@@ -171,7 +233,7 @@ $("#read-back").addEventListener("click", () => { mic.cancel(); resetReadAloud()
 
 $("#read-btn").addEventListener("click", async () => {
   const btn = $("#read-btn");
-  if (btn.textContent === "Start") {
+  if (!btn.classList.contains("recording")) {
     try {
       await mic.start();
     } catch (err) {
@@ -180,9 +242,11 @@ $("#read-btn").addEventListener("click", async () => {
     }
     startedAt = Date.now();
     timerId = setInterval(() => ($("#timer").textContent = formatTime((Date.now() - startedAt) / 1000)), 250);
-    btn.textContent = "Done";
     btn.classList.add("recording");
-    $("#listening").classList.remove("hidden");
+    setButton(btn, "Done", { iconName: "check", color: "green" });
+    $("#read-help-main").textContent = "Dindin is listening";
+    $("#read-prompt-main").textContent = "Take your time.";
+    $("#read-prompt-sub").textContent = "Tap Done only when you finish the whole story.";
     $("#mic-error").classList.add("hidden");
   } else {
     btn.disabled = true;
@@ -221,17 +285,20 @@ function kindMessage(correct, total) {
   return `Nice try, ${name}! Let's practice together.`;
 }
 
+const WORD_CLASS = { green: "correct-word", red: "practice-word", grey: "skipped-word" };
+
 onEnter["my-result"] = () => {
   const r = state.reading;
-  $("#result-message").textContent = kindMessage(r.words_correct, r.total_words);
   $("#result-score").textContent = `${r.words_correct} of ${r.total_words} words correct`;
-  $("#result-time").textContent = `Time: ${formatTime(r.seconds_taken)}`;
+  $("#result-message").textContent = "Nice reading! Here is what Dindin heard.";
+  $("#result-cheer").textContent = kindMessage(r.words_correct, r.total_words);
+  $("#result-time").textContent = formatLongTime(r.seconds_taken);
   const box = $("#result-words");
   box.textContent = "";
   r.words.forEach((w) => {
-    box.appendChild(el("span", { class: `w w-${w.status}` }, w.word));
-    box.appendChild(document.createTextNode(" "));
+    box.appendChild(el("span", { class: WORD_CLASS[w.status] || "skipped-word" }, w.word));
   });
+  $("#done-score").textContent = `${r.words_correct} / ${r.total_words}`;
   loadQuiz(); // fetch questions now so Story Quiz opens without waiting
 };
 $("#result-next").addEventListener("click", () => go("story-quiz"));
@@ -239,26 +306,25 @@ $("#result-next").addEventListener("click", () => go("story-quiz"));
 // ---------- Record button helper (Story Quiz and Practice Again) ----------
 // First tap starts the mic ("Done" appears), second tap stops it and calls onAudio(blob).
 
-function recordButton(btn, listening, startLabel, onAudio) {
+function recordButton(btn, labels, hooks) {
   btn.addEventListener("click", async () => {
     if (!btn.classList.contains("recording")) {
       try {
         await mic.start();
       } catch (err) {
-        onAudio(null, micErrorText(err));
+        hooks.onAudio(null, micErrorText(err));
         return;
       }
-      btn.textContent = "Done";
       btn.classList.add("recording");
-      listening.classList.remove("hidden");
+      setButton(btn, labels.done, { iconName: "check", color: "green" });
+      hooks.onListen();
     } else {
       btn.disabled = true;
       btn.classList.remove("recording");
-      listening.classList.add("hidden");
-      btn.textContent = "Checking...";
+      setButton(btn, "Checking...", { color: "green" });
       const audio = await mic.stop();
-      await onAudio(audio);
-      btn.textContent = startLabel;
+      await hooks.onAudio(audio);
+      setButton(btn, labels.start, { iconName: "mic", color: "blue" });
       btn.disabled = false;
     }
   });
@@ -272,11 +338,12 @@ function showFeedback(node, text) {
 // ---------- Story Quiz ----------
 // Questions are fetched while My Result is showing, so they are usually ready.
 
-const quiz = { questions: null, index: 0, loading: null };
+const quiz = { questions: null, index: 0, loading: null, answered: 0 };
 
 function loadQuiz() {
   quiz.questions = null;
   quiz.index = 0;
+  quiz.answered = 0;
   quiz.loading = api(`/quiz/${state.reading.reading_id}`)
     .then((q) => (quiz.questions = q.questions))
     .catch(() => (quiz.questions = []));
@@ -286,44 +353,73 @@ function hasPracticeWords() {
   return state.reading.words.some((w) => w.status === "red");
 }
 
+function setVoiceBox(mode, main, sub) {
+  const box = $("#voice-box");
+  box.classList.toggle("is-answered", mode === "answered");
+  box.classList.toggle("is-listening", mode === "listening");
+  $("#voice-icon").innerHTML = icon(mode === "answered" ? "check" : "mic", 22);
+  $("#voice-main").textContent = main;
+  $("#voice-sub").textContent = sub;
+}
+
+function finishQuiz() {
+  const total = quiz.questions ? quiz.questions.length : 0;
+  $("#done-quiz").textContent = total ? `${quiz.answered} / ${total}` : "–";
+  go(hasPracticeWords() ? "practice-again" : "all-done");
+}
+
 async function showQuestion() {
   $("#quiz-feedback").classList.add("hidden");
   $("#quiz-next").classList.add("hidden");
   $("#quiz-btn").classList.remove("hidden");
+  setMood($("#quiz-mascot"), "thinking");
+  $("#quiz-mascot-msg").textContent = "I'm listening.";
+  setVoiceBox("idle", "Tap Answer, then say it out loud.", "Speak clearly when you're ready.");
   if (!quiz.questions) {
     $("#quiz-question").textContent = "Getting your questions ready...";
     await quiz.loading;
   }
-  if (!quiz.questions.length) return go(hasPracticeWords() ? "practice-again" : "all-done");
+  if (!quiz.questions.length) return finishQuiz();
   const q = quiz.questions[quiz.index];
-  $("#quiz-count").textContent = `${quiz.index + 1} of ${quiz.questions.length}`;
+  const n = quiz.questions.length;
+  $("#quiz-eyebrow").textContent = `${state.story.title} · Question ${quiz.index + 1} of ${n}`;
+  $("#quiz-num").textContent = quiz.index + 1;
   $("#quiz-question").textContent = q.question;
+  $("#quiz-next-label").textContent = quiz.index + 1 < n ? "Next question" : hasPracticeWords() ? "Practice words" : "All done";
 }
 
 onEnter["story-quiz"] = showQuestion;
 
-recordButton($("#quiz-btn"), $("#quiz-listening"), "Answer", async (audio, error) => {
-  if (!audio) return showFeedback($("#quiz-feedback"), error);
-  const q = quiz.questions[quiz.index];
-  const form = new FormData();
-  form.append("reading_id", state.reading.reading_id);
-  form.append("question", q.question);
-  if (q.question_id) form.append("question_id", q.question_id);
-  form.append("audio", audio, "answer.webm");
-  try {
-    const r = await api("/quiz/answer", { method: "POST", body: form });
-    showFeedback($("#quiz-feedback"), r.message);
-    $("#quiz-btn").classList.add("hidden");
-    $("#quiz-next").classList.remove("hidden");
-  } catch {
-    showFeedback($("#quiz-feedback"), "Let's try again! Tap Answer and say it out loud.");
-  }
+recordButton($("#quiz-btn"), { start: "Answer", done: "I've answered" }, {
+  onListen: () => setVoiceBox("listening", "Listening for your answer...", "Tap \u201cI've answered\u201d when you finish."),
+  onAudio: async (audio, error) => {
+    if (!audio) return showFeedback($("#quiz-feedback"), error);
+    const q = quiz.questions[quiz.index];
+    const form = new FormData();
+    form.append("reading_id", state.reading.reading_id);
+    form.append("question", q.question);
+    if (q.question_id) form.append("question_id", q.question_id);
+    form.append("audio", audio, "answer.webm");
+    try {
+      const r = await api("/quiz/answer", { method: "POST", body: form });
+      quiz.answered += 1;
+      setVoiceBox("answered", "Dindin heard you.", "Your answer stays on this laptop.");
+      $("#quiz-feedback").innerHTML = `${icon("sparkles")}<span>${escapeHtml(r.message)}</span>`;
+      $("#quiz-feedback").classList.remove("hidden");
+      setMood($("#quiz-mascot"), "encouraging");
+      $("#quiz-mascot-msg").textContent = "Wonderful!";
+      $("#quiz-btn").classList.add("hidden");
+      $("#quiz-next").classList.remove("hidden");
+    } catch {
+      setVoiceBox("idle", "Let's try again!", "Tap Answer and say it out loud.");
+    }
+  },
 });
 
 $("#quiz-next").addEventListener("click", () => {
   quiz.index += 1;
   if (quiz.index < quiz.questions.length) showQuestion();
-  else go(hasPracticeWords() ? "practice-again" : "all-done");
+  else finishQuiz();
 });
 
 // ---------- Practice Again ----------
@@ -332,8 +428,11 @@ const practice = { id: null, targets: [] };
 
 onEnter["practice-again"] = async () => {
   $("#practice-result").classList.add("hidden");
+  $("#practice-result-box").classList.add("hidden");
   $("#practice-next").classList.add("hidden");
+  $("#practice-listening").classList.add("hidden");
   $("#practice-btn").classList.remove("hidden");
+  setMood($("#practice-mascot"), "retry");
   const box = $("#practice-sentences");
   box.textContent = "Getting your practice words ready...";
   try {
@@ -347,10 +446,10 @@ onEnter["practice-again"] = async () => {
     box.textContent = "";
     p.sentences.forEach((s) => {
       const line = el("p");
-      s.split(" ").forEach((word) => {
+      s.split(" ").forEach((word, i) => {
+        if (i) line.appendChild(document.createTextNode(" "));
         const target = p.target_words.includes(word.toLowerCase().replace(/[^\p{L}\p{N}]/gu, ""));
-        line.appendChild(target ? el("span", { class: "w w-red" }, word) : document.createTextNode(word));
-        line.appendChild(document.createTextNode(" "));
+        line.appendChild(target ? el("mark", {}, word) : document.createTextNode(word));
       });
       box.appendChild(line);
     });
@@ -363,18 +462,28 @@ function wrongWords(n) {
   return `${n} wrong word${n === 1 ? "" : "s"}`;
 }
 
-recordButton($("#practice-btn"), $("#practice-listening"), "Start", async (audio, error) => {
-  if (!audio) return showFeedback($("#practice-result"), error);
-  const form = new FormData();
-  form.append("audio", audio, "practice.webm");
-  try {
-    const r = await api(`/practice/${practice.id}/check`, { method: "POST", body: form });
-    showFeedback($("#practice-result"), `Before: ${wrongWords(r.wrong_before)}. Now: ${wrongWords(r.wrong_after)}.`);
-    $("#practice-btn").classList.add("hidden");
-    $("#practice-next").classList.remove("hidden");
-  } catch {
-    showFeedback($("#practice-result"), "Let's try again! Tap Start and read the sentences.");
-  }
+recordButton($("#practice-btn"), { start: "Start reading", done: "Done" }, {
+  onListen: () => {
+    $("#practice-listening").classList.remove("hidden");
+    $("#practice-result").classList.add("hidden");
+  },
+  onAudio: async (audio, error) => {
+    $("#practice-listening").classList.add("hidden");
+    if (!audio) return showFeedback($("#practice-result"), error);
+    const form = new FormData();
+    form.append("audio", audio, "practice.webm");
+    try {
+      const r = await api(`/practice/${practice.id}/check`, { method: "POST", body: form });
+      $("#practice-before").textContent = wrongWords(r.wrong_before);
+      $("#practice-after").textContent = wrongWords(r.wrong_after);
+      $("#practice-result-box").classList.remove("hidden");
+      setMood($("#practice-mascot"), r.wrong_after < r.wrong_before ? "celebrating" : "encouraging");
+      $("#practice-btn").classList.add("hidden");
+      $("#practice-next").classList.remove("hidden");
+    } catch {
+      showFeedback($("#practice-result"), "Let's try again! Tap Start reading and read the sentences.");
+    }
+  },
 });
 
 $("#practice-next").addEventListener("click", () => go("all-done"));
@@ -390,6 +499,22 @@ function band(accuracy) {
   return "help";
 }
 
+const SUPPORT = {
+  good: ["On track", ""],
+  almost: ["Keep an eye", "keep-eye"],
+  help: ["Needs help", "needs-help"],
+  none: ["No reading yet", "no-reading"],
+};
+
+function renderSummary() {
+  const read = classData.filter((p) => p.latest_accuracy !== null && p.latest_accuracy !== undefined);
+  $("#sum-pupils").textContent = classData.length;
+  $("#sum-average").textContent = read.length
+    ? `${Math.round((read.reduce((sum, p) => sum + p.latest_accuracy, 0) / read.length) * 100)}%`
+    : "–";
+  $("#sum-help").textContent = read.filter((p) => band(p.latest_accuracy) === "help").length;
+}
+
 function renderClass() {
   const sort = $("#sort-select").value;
   const rows = [...classData];
@@ -403,17 +528,38 @@ function renderClass() {
 
   const tbody = $("#class-rows");
   tbody.textContent = "";
-  rows.forEach((p) => {
-    const tr = el("tr", newest && p.id === newest.id ? { class: "newest" } : {});
-    tr.appendChild(el("td", {}, p.class_no ? `${p.first_name} (${p.class_no})` : p.first_name));
-    tr.appendChild(el("td", {}, p.latest_accuracy === null ? "–"
-      : `${Math.round(p.latest_accuracy * 100)}% (${p.latest_words_correct}/${p.latest_total_words})`));
+  rows.forEach((p, idx) => {
+    const isNewest = newest && p.id === newest.id;
+    const tr = el("tr", isNewest ? { class: "newest" } : {});
+
+    const nameTd = el("td");
+    const nameCell = el("div", { class: "pupil-cell" });
+    nameCell.appendChild(el("span", { class: `table-initial initial-${(idx % 6) + 1}` }, initials(p.first_name)));
+    nameCell.appendChild(el("strong", {}, p.class_no ? `${p.first_name} (${p.class_no})` : p.first_name));
+    if (isNewest) nameCell.appendChild(el("span", { class: "new-tag" }, "NEW"));
+    nameTd.appendChild(nameCell);
+    tr.appendChild(nameTd);
+
+    const scoreTd = el("td");
+    scoreTd.appendChild(el("strong", {}, p.latest_accuracy === null ? "–"
+      : `${p.latest_words_correct} of ${p.latest_total_words} (${Math.round(p.latest_accuracy * 100)}%)`));
+    tr.appendChild(scoreTd);
     tr.appendChild(el("td", {}, p.latest_seconds === null ? "–" : formatTime(p.latest_seconds)));
     tr.appendChild(el("td", {}, p.trouble_words.join(", ") || "–"));
-    tr.appendChild(el("td", {}, p.tip || "–"));
+
+    const [supportText, supportClass] = SUPPORT[band(p.latest_accuracy)];
+    const supportTd = el("td");
+    supportTd.appendChild(el("span", { class: `support-label ${supportClass}`.trim() }, supportText));
+    tr.appendChild(supportTd);
+
+    tr.appendChild(el("td", { class: "tip-cell" }, p.tip || "–"));
+
     const heat = el("div", { class: "heat" });
+    // Left-pad with undefined so blank "–" cells appear on the left (oldest side),
+    // keeping the newest reading always in the rightmost (last) cell.
+    const padded = Array(5 - p.last5.length).fill(undefined).concat(p.last5);
     for (let i = 0; i < 5; i++) {
-      const acc = p.last5[i];
+      const acc = padded[i];
       heat.appendChild(el("span", { class: `cell ${band(acc)}` }, acc === undefined ? "–" : String(Math.round(acc * 100))));
     }
     const td = el("td");
@@ -426,6 +572,7 @@ function renderClass() {
 onEnter["class-view"] = async () => {
   refreshStatus();
   classData = await api("/teacher/class");
+  renderSummary();
   renderClass();
 };
 
