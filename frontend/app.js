@@ -15,8 +15,18 @@ const $ = (sel) => document.querySelector(sel);
 
 async function api(path, options = {}) {
   const res = await fetch(path, options);
-  if (!res.ok) throw new Error(`${path} failed: ${res.status}`);
+  if (!res.ok) {
+    const err = new Error(`${path} failed: ${res.status}`);
+    err.status = res.status;
+    throw err;
+  }
   return res.json();
+}
+
+// 503 = the server is up but Whisper (speech to text) is not loaded, so retrying won't help.
+function retryText(err, retry) {
+  if (err && err.status === 503) return "Dindin can't listen yet. Please ask your teacher to check the setup.";
+  return retry;
 }
 
 function el(tag, attrs = {}, text = "") {
@@ -227,6 +237,11 @@ onEnter["read-aloud"] = () => {
   $("#story-text").textContent = state.story.full_text;
   $("#placeholder-note").classList.toggle("hidden", !state.story.placeholder);
   resetReadAloud();
+  api("/health").then((h) => {
+    if (h.whisper_loaded) return;
+    resetReadAloud(retryText({ status: 503 }));
+    $("#read-btn").disabled = true;
+  }).catch(() => {});
 };
 
 $("#read-back").addEventListener("click", () => { mic.cancel(); resetReadAloud(); go("pick-story"); });
@@ -269,9 +284,9 @@ async function sendReading(audio, seconds) {
   try {
     state.reading = await api("/readings", { method: "POST", body: form });
     go("my-result");
-  } catch {
+  } catch (err) {
     go("read-aloud");
-    resetReadAloud("Let's try again! Tap Start and read the story.");
+    resetReadAloud(retryText(err, "Let's try again! Tap Start and read the story."));
   }
 }
 
@@ -410,8 +425,8 @@ recordButton($("#quiz-btn"), { start: "Answer", done: "I've answered" }, {
       $("#quiz-mascot-msg").textContent = "Wonderful!";
       $("#quiz-btn").classList.add("hidden");
       $("#quiz-next").classList.remove("hidden");
-    } catch {
-      setVoiceBox("idle", "Let's try again!", "Tap Answer and say it out loud.");
+    } catch (err) {
+      setVoiceBox("idle", "Let's try again!", retryText(err, "Tap Answer and say it out loud."));
     }
   },
 });
@@ -480,8 +495,8 @@ recordButton($("#practice-btn"), { start: "Start reading", done: "Done" }, {
       setMood($("#practice-mascot"), r.wrong_after < r.wrong_before ? "celebrating" : "encouraging");
       $("#practice-btn").classList.add("hidden");
       $("#practice-next").classList.remove("hidden");
-    } catch {
-      showFeedback($("#practice-result"), "Let's try again! Tap Start reading and read the sentences.");
+    } catch (err) {
+      showFeedback($("#practice-result"), retryText(err, "Let's try again! Tap Start reading and read the sentences."));
     }
   },
 });
