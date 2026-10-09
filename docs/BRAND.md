@@ -45,13 +45,19 @@
 The API still calls wrong words `red`; on screen they are yellow "practice words", which feels kinder and still differs from green in brightness.
 
 **App colors**
-| Use | Hex |
-| --- | --- |
-| Primary (buttons, header) | `#1E4E8C` (deep blue, white text on it) |
-| Accent (stars, highlights) | `#F2B705` (sun yellow, dark text only) |
-| Pupil background | `#FFF8EC` (warm cream) |
-| Teacher background | `#F7F8FA` (light grey) |
-| Main text | `#1F2933` |
+From the designer's Figma Make prototype; the tokens live at the top of `frontend/styles.css`. [CHANGED]
+| Use | Light | Dark mode |
+| --- | --- | --- |
+| Primary green (main buttons, progress) | `#00a460` (white text on big buttons; small buttons use `#00784a`) | `#26c982` (dark text) |
+| Green text (labels, eyebrows) | `#00784a` | `#72dfad` |
+| Blue (Start / Answer buttons) | `#0a8ccc` (white text) | `#38b9f7` (dark text) |
+| Blue text | `#0f6f9c` | `#7bd2fa` |
+| Yellow (sun, practice words, notes) | `#ffc800`, soft `#fff7d5` | `#ffd43b`, soft `#3d3618` |
+| Main text | `#303a36` | `#f7fcf9` |
+| Secondary text | `#61706a` | `#c7d3ce` |
+| Cards | `#ffffff` | `#18231f` |
+| Background (both modes) | `#f6f9f7` | `#101815` |
+| Lines and borders | `#dce7e2` | `#34453f` |
 
 **Heatmap cells:** the accuracy number is always printed inside each cell, so the heatmap does not rely on color alone. Grey is **not** used here, because grey means "skipped" on the result screen.
 | Accuracy | Text | Background | Meaning |

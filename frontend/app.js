@@ -54,6 +54,7 @@ function go(id) {
   document.body.className = TEACHER_SCREENS.includes(id) ? "teacher" : "pupil";
   updateTopbar(id);
   document.querySelectorAll(".pupil-name").forEach((n) => (n.textContent = state.pupil ? state.pupil.first_name : ""));
+  document.querySelectorAll(".story-name").forEach((n) => (n.textContent = state.story ? state.story.title : ""));
   window.scrollTo(0, 0);
   if (onEnter[id]) onEnter[id]();
 }
@@ -323,11 +324,12 @@ function showFeedback(node, text) {
 // ---------- Story Quiz ----------
 // Questions are fetched while My Result is showing, so they are usually ready.
 
-const quiz = { questions: null, index: 0, loading: null };
+const quiz = { questions: null, index: 0, loading: null, answered: 0 };
 
 function loadQuiz() {
   quiz.questions = null;
   quiz.index = 0;
+  quiz.answered = 0; // shown on All Done
   quiz.loading = api(`/quiz/${state.reading.reading_id}`)
     .then((q) => (quiz.questions = q.questions))
     .catch(() => (quiz.questions = []));
@@ -348,6 +350,7 @@ async function showQuestion() {
   if (!quiz.questions.length) return go(hasPracticeWords() ? "practice-again" : "all-done");
   const q = quiz.questions[quiz.index];
   $("#quiz-count").textContent = `${quiz.index + 1} of ${quiz.questions.length}`;
+  $("#quiz-number").textContent = quiz.index + 1;
   $("#quiz-question").textContent = q.question;
 }
 
@@ -363,6 +366,7 @@ recordButton($("#quiz-btn"), $("#quiz-listening"), "Answer", async (audio, error
   form.append("audio", audio, "answer.webm");
   try {
     const r = await api("/quiz/answer", { method: "POST", body: form });
+    quiz.answered += 1;
     showFeedback($("#quiz-feedback"), r.message);
     $("#quiz-btn").classList.add("hidden");
     $("#quiz-next").classList.remove("hidden");
@@ -410,8 +414,9 @@ onEnter["practice-again"] = async () => {
   }
 };
 
+// Pupil mode never says "wrong" (docs/BRAND.md): missed words are "practice words"
 function wrongWords(n) {
-  return `${n} wrong word${n === 1 ? "" : "s"}`;
+  return `${n} practice word${n === 1 ? "" : "s"}`;
 }
 
 recordButton($("#practice-btn"), $("#practice-listening"), "Start", async (audio, error) => {
@@ -429,6 +434,14 @@ recordButton($("#practice-btn"), $("#practice-listening"), "Start", async (audio
 });
 
 $("#practice-next").addEventListener("click", () => go("all-done"));
+
+// ---------- All Done ----------
+
+onEnter["all-done"] = () => {
+  const r = state.reading;
+  $("#done-words").textContent = r ? `${r.words_correct} / ${r.total_words}` : "–";
+  $("#done-quiz").textContent = quiz.questions && quiz.questions.length ? `${quiz.answered} / ${quiz.questions.length}` : "–";
+};
 
 // ---------- Teacher's Class View (with Heatmap) ----------
 

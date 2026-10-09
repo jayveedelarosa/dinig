@@ -4,9 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Dinig</title>
-  <link rel="icon" href="data:,">
-  <!-- TODO [FRONTEND]: real Dinig icon (designer) -->
-  <!-- TODO [FRONTEND]: Story Quiz screen is very bare; show the story title or picture (designer screens). -->
+  <link rel="icon" href="assets/52b47.svg" type="image/svg+xml">
   <!-- Everything is local: no CDN, no Google Fonts. Fonts live in /fonts/. -->
   <link rel="stylesheet" href="styles.css">
 </head>
@@ -194,36 +192,75 @@
 
   <!-- Story Quiz (pupil) -->
   <section id="story-quiz" class="screen">
-    <header class="bar"><h2>Story Quiz <span id="quiz-count" class="muted"></span></h2></header>
-    <p id="quiz-question" class="question"></p>
-    <div class="read-controls">
-      <div id="quiz-listening" class="listening hidden"><span class="mic-pulse"></span> I'm listening...</div>
-      <button id="quiz-btn" class="btn btn-big">Answer</button>
+    <div class="quiz-layout">
+      <article class="quiz-card">
+        <span class="quiz-story"><svg class="icon icon-sm"><use href="#i-book"/></svg><span class="story-name"></span></span>
+        <span class="eyebrow"><span>Story Quiz · Question <span id="quiz-count"></span></span></span>
+        <span class="question-number" id="quiz-number">1</span>
+        <h1 id="quiz-question"></h1>
+        <p class="quiz-hint">Tap Answer, say your answer out loud, then tap Done.</p>
+        <div class="voice-box">
+          <span class="voice-icon"><svg class="icon"><use href="#i-mic"/></svg></span>
+          <span>
+            <strong><span id="quiz-listening" class="listening hidden"><span class="mic-pulse"></span>Dindin is listening...</span><span class="ready-text">Say your answer when you're ready.</span></strong>
+            <small>Your voice stays on this laptop.</small>
+          </span>
+        </div>
+        <p id="quiz-feedback" class="encouragement hidden"></p>
+        <div class="quiz-actions">
+          <button id="quiz-btn" class="button button-blue button-big mic-button">Answer</button>
+          <button class="button button-primary button-big hidden" id="quiz-next">Next <svg class="icon"><use href="#i-arrow"/></svg></button>
+        </div>
+      </article>
+      <aside class="quiz-mascot">
+        <div class="dindin-expression dindin-thinking" role="img" aria-label="Dindin is listening"></div>
+        <div class="quiz-prompt"><strong>Take your time.</strong><span>There are no tricky answers here.</span></div>
+      </aside>
     </div>
-    <p id="quiz-feedback" class="feedback hidden"></p>
-    <div class="actions"><button class="btn btn-big hidden" id="quiz-next">Next</button></div>
   </section>
 
   <!-- Practice Again (pupil) -->
   <section id="practice-again" class="screen">
-    <header class="bar"><h2>Practice Again</h2></header>
-    <div id="practice-sentences" class="story practice"></div>
-    <div class="read-controls">
-      <div id="practice-listening" class="listening hidden"><span class="mic-pulse"></span> I'm listening...</div>
-      <button id="practice-btn" class="btn btn-big">Start</button>
+    <div class="practice-layout">
+      <div class="practice-heading">
+        <span class="eyebrow">Practice Again</span>
+        <h1>Let's read these sentences.</h1>
+        <p>Read each one out loud. Your practice words are marked.</p>
+      </div>
+      <div class="practice-content">
+        <div id="practice-sentences" class="practice-sentences"></div>
+        <aside>
+          <div class="dindin-expression dindin-retry" role="img" aria-label="Dindin is ready to practice with you"></div>
+          <p id="practice-result" class="practice-change hidden"></p>
+          <p class="practice-hint">Tap Start, read all the sentences, then tap Done.</p>
+        </aside>
+      </div>
+      <div class="practice-footer">
+        <span class="practice-note"><svg class="icon icon-sm"><use href="#i-sparkles"/></svg>These sentences were made on this laptop.</span>
+        <div class="practice-actions">
+          <span id="practice-listening" class="listening hidden"><span class="mic-pulse"></span>Dindin is listening...</span>
+          <button id="practice-btn" class="button button-blue button-big mic-button">Start</button>
+          <button class="button button-primary button-big hidden" id="practice-next">Next <svg class="icon"><use href="#i-arrow"/></svg></button>
+        </div>
+      </div>
     </div>
-    <p id="practice-result" class="feedback hidden"></p>
-    <div class="actions"><button class="btn btn-big hidden" id="practice-next">Next</button></div>
   </section>
 
   <!-- All Done (pupil) -->
   <section id="all-done" class="screen">
-    <div class="center">
-      <div class="stars">★ ★ ★</div>
-      <p class="big-text">Great reading, <span class="pupil-name"></span>!</p>
-      <div class="big-buttons">
-        <button class="btn btn-big" data-go="pick-name">Next Reader</button>
-        <button class="btn btn-big btn-secondary" data-go="home">Home</button>
+    <div class="center-stage complete-stage">
+      <div class="celebration-lines" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+      <div class="dindin-expression dindin-celebrating" role="img" aria-label="Dindin is celebrating"></div>
+      <span class="eyebrow">All Done</span>
+      <h1>Great reading, <span class="pupil-name"></span>!</h1>
+      <p>You read a whole story out loud. Dindin is proud of you!</p>
+      <div class="complete-stats">
+        <span><svg class="icon"><use href="#i-check"/></svg><strong id="done-words">–</strong><small>words correct</small></span>
+        <span><svg class="icon"><use href="#i-sparkles"/></svg><strong id="done-quiz">–</strong><small>quiz questions answered</small></span>
+      </div>
+      <div class="complete-actions">
+        <button class="button button-blue button-big" data-go="pick-name">Next Reader <svg class="icon"><use href="#i-arrow"/></svg></button>
+        <button class="button button-quiet button-big" data-go="home"><svg class="icon"><use href="#i-home"/></svg>Home</button>
       </div>
     </div>
   </section>
