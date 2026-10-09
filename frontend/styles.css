@@ -54,7 +54,9 @@ button:focus-visible, .btn:focus-visible { outline: 3px solid rgba(28, 176, 246,
 .brand img { width: 74px; height: 48px; object-fit: contain; }
 .topbar, .home-topbar { display: grid; height: 72px; grid-template-columns: 1fr 360px 1fr; align-items: center; padding: 0 34px; border-bottom: 2px solid var(--line); background: rgba(255, 255, 255, .96); }
 .home-topbar { grid-template-columns: 1fr 1fr; }
+.topbar-start { display: flex; align-items: center; justify-self: start; gap: 4px; min-width: 0; }
 .topbar .brand { justify-self: start; }
+.btn-back { min-height: 40px; padding: 6px 12px 6px 8px; font-size: 13px; box-shadow: 0 3px 0 #d1dcd7; }
 .topbar-actions { display: flex; align-items: center; justify-self: end; gap: 9px; }
 .offline-pill { display: inline-flex; align-items: center; gap: 8px; padding: 8px 13px; border: 1px solid #bde3d1; border-radius: 999px; background: var(--green-soft); color: var(--green-dark); font-size: 11px; font-weight: 800; }
 .offline-pill i { width: 8px; height: 8px; border-radius: 50%; background: var(--green); box-shadow: 0 0 0 4px rgba(0, 164, 96, .12); animation: pill-pulse 2.4s ease-in-out infinite; }

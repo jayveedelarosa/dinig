@@ -95,11 +95,27 @@ function go(id) {
   if (onEnter[id]) onEnter[id]();
 }
 
+// Back is one step. The logo (data-go="home") always opens Home.
+function leaveReadAloud() {
+  mic.cancel();
+  resetReadAloud();
+}
+
 document.addEventListener("click", (e) => {
+  const back = e.target.closest("[data-back]");
+  if (back) {
+    e.preventDefault();
+    if (back.dataset.back === "pick-story") leaveReadAloud();
+    go(back.dataset.back);
+    return;
+  }
   const target = e.target.closest("[data-go]");
   if (!target) return;
   e.preventDefault();
-  if (target.dataset.go === "home") mic.cancel();
+  if (target.dataset.go === "home") {
+    if ($("#read-aloud").classList.contains("active")) leaveReadAloud();
+    else mic.cancel();
+  }
   go(target.dataset.go);
 });
 
@@ -243,8 +259,6 @@ onEnter["read-aloud"] = () => {
     $("#read-btn").disabled = true;
   }).catch(() => {});
 };
-
-$("#read-back").addEventListener("click", () => { mic.cancel(); resetReadAloud(); go("pick-story"); });
 
 $("#read-btn").addEventListener("click", async () => {
   const btn = $("#read-btn");
