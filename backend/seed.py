@@ -58,7 +58,7 @@ STORIES = [
         # ~53 words. Harder words: carabao, harvest, thunder, shelter.
         "title": "Rain on the Farm",
         "text": (
-            "Tatay works on the farm with his carabao. "
+            "Dad works on the farm with his carabao. "
             "The carabao helps pull the plow before the harvest. "
             "One afternoon dark clouds filled the sky. "
             "Thunder rumbled and the rain came down fast. "
@@ -66,7 +66,7 @@ STORIES = [
             "They sat inside and drank warm salabat while they waited for the sun."
         ),
         "questions": [
-            ("What does the carabao help Tatay do on the farm?",
+            ("What does the carabao help Dad do on the farm?",
              "It helps pull the plow."),
             ("Where did Ben and his father bring the carabao when it rained?",
              "To the shelter."),
