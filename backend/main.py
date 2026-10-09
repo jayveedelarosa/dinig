@@ -7,6 +7,7 @@ import logging
 import shutil
 import subprocess
 import uuid
+from collections import Counter
 from contextlib import asynccontextmanager
 from datetime import datetime
 from pathlib import Path
@@ -19,7 +20,8 @@ from backend import config, db
 from backend.ai import local_models
 from backend.audio import ffmpeg_exe, to_wav
 from backend.reading_check import check_reading, summarize
-from backend.text_utils import clean_story
+from backend.text_utils import clean_story, normalize
+from backend.text_utils import words as text_words
 from backend.tips import rule_based_tip
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
@@ -166,6 +168,172 @@ def create_reading(
 
     return {"reading_id": reading_id, "words": words, "words_correct": s["words_correct"],
             "total_words": s["total_words"], "seconds_taken": seconds}
+
+
+# ---------- Story Quiz (backup questions for now) ----------
+
+STOPWORDS = {"the", "and", "because", "was", "his", "her", "him", "they", "them", "she", "into",
+             "with", "for", "from", "that", "this", "are", "has", "had", "did", "does", "its"}
+MESSAGES = {
+    "right": "Yes! Great thinking!",
+    "wrong": "Not yet. Good try! The answer is in the story.",
+    "unchecked": "Good thinking!",
+}
+
+
+def _keyword_match(answer: str, heard: str) -> bool:
+    """Right if any key word of the saved answer was said ("rained" matches "rain")."""
+    keys = [w for w in text_words(answer) if len(w) >= 3 and w not in STOPWORDS]
+    said = text_words(heard)
+    return any(h.startswith(k[:4]) for k in keys for h in said)
+
+
+@app.get("/quiz/{reading_id}")
+def get_quiz(reading_id: int):
+    with db.connect() as conn:
+        reading = conn.execute("SELECT story_id FROM readings WHERE id = ?", (reading_id,)).fetchone()
+        if not reading:
+            raise HTTPException(404, "Reading not found")
+        rows = conn.execute("SELECT id, question FROM questions WHERE story_id = ? ORDER BY id LIMIT 2",
+                            (reading["story_id"],)).fetchall()
+    # TODO [BACKEND]: ask Qwen for 2 questions via local_models.generate(prompt, config.QUIZ_TIMEOUT_SECONDS);
+    # return {"source": "ai", ...} and fall back to these backup questions when it returns None.
+    return {"source": "backup", "questions": [{"question_id": r["id"], "question": r["question"]} for r in rows]}
+
+
+@app.post("/quiz/answer")
+def quiz_answer(
+    reading_id: int = Form(...),
+    question: str = Form(...),
+    question_id: int | None = Form(None),
+    audio: UploadFile = File(...),
+):
+    with db.connect() as conn:
+        reading = conn.execute("SELECT r.id, s.language FROM readings r JOIN stories s ON s.id = r.story_id "
+                               "WHERE r.id = ?", (reading_id,)).fetchone()
+        backup = conn.execute("SELECT answer FROM questions WHERE id = ?", (question_id,)).fetchone() \
+            if question_id else None
+    if not reading:
+        raise HTTPException(404, "Reading not found")
+    if not local_models.whisper_loaded():
+        raise HTTPException(503, "Whisper is not loaded. Check /health.")
+
+    webm = wav = None
+    try:
+        webm = _save_upload(audio)
+        wav = to_wav(webm)
+        heard = local_models.transcribe(wav, reading["language"])
+    except subprocess.CalledProcessError:
+        raise HTTPException(400, "Could not read the recording. Please try again.")
+    finally:
+        _delete(webm, wav)
+
+    # TODO [BACKEND]: judge with Qwen (story text + question + heard answer) via local_models.generate();
+    # keep this keyword match as the fallback when Qwen is slow or off.
+    if backup:
+        result = "right" if _keyword_match(backup["answer"], heard) else "wrong"
+    else:
+        result = "unchecked"
+    with db.connect() as conn:  # privacy: only the result is saved, never what the child said
+        conn.execute("INSERT INTO quiz_answers (reading_id, question, result) VALUES (?, ?, ?)",
+                     (reading_id, question, result))
+    return {"result": result, "message": MESSAGES[result]}
+
+
+# ---------- Practice Again (template sentences for now) ----------
+
+class PracticeRequest(BaseModel):
+    reading_id: int
+
+
+@app.post("/practice")
+def create_practice(req: PracticeRequest):
+    with db.connect() as conn:
+        reading = conn.execute("SELECT red_words FROM readings WHERE id = ?", (req.reading_id,)).fetchone()
+        if not reading:
+            raise HTTPException(404, "Reading not found")
+        targets = list(dict.fromkeys(db.from_json(reading["red_words"])))[:3]
+        # TODO [BACKEND]: ask Qwen for 2-3 short, easy sentences using the target words
+        # (local_models.generate); keep these templates as the fallback.
+        sentences = [f"I can read the word {w}." for w in targets]
+        cur = conn.execute("INSERT INTO practice (reading_id, sentences, wrong_before) VALUES (?, ?, ?)",
+                           (req.reading_id, db.to_json(sentences), len(targets)))
+    return {"practice_id": cur.lastrowid, "sentences": sentences, "target_words": targets,
+            "wrong_before": len(targets)}
+
+
+@app.post("/practice/{practice_id}/check")
+def check_practice(practice_id: int, audio: UploadFile = File(...)):
+    with db.connect() as conn:
+        row = conn.execute("SELECT p.sentences, p.wrong_before, r.red_words, s.language FROM practice p "
+                           "JOIN readings r ON r.id = p.reading_id JOIN stories s ON s.id = r.story_id "
+                           "WHERE p.id = ?", (practice_id,)).fetchone()
+    if not row:
+        raise HTTPException(404, "Practice not found")
+    if not local_models.whisper_loaded():
+        raise HTTPException(503, "Whisper is not loaded. Check /health.")
+    targets = list(dict.fromkeys(db.from_json(row["red_words"])))[:3]
+
+    webm = wav = None
+    try:
+        webm = _save_upload(audio)
+        wav = to_wav(webm)
+        words = check_reading(wav, " ".join(db.from_json(row["sentences"])), row["language"])
+    except subprocess.CalledProcessError:
+        raise HTTPException(400, "Could not read the recording. Please try again.")
+    finally:
+        _delete(webm, wav)
+
+    # A target word is still missed if it was never read green in the practice sentences.
+    read_ok = {normalize(w["word"]) for w in words if w["status"] == "green"}
+    still_missed = [t for t in targets if t not in read_ok]
+    with db.connect() as conn:
+        conn.execute("UPDATE practice SET wrong_after = ?, still_missed = ? WHERE id = ?",
+                     (len(still_missed), db.to_json(still_missed), practice_id))
+    return {"words": words, "wrong_before": row["wrong_before"], "wrong_after": len(still_missed),
+            "still_missed": still_missed}
+
+
+# ---------- Teacher's Class View ----------
+
+@app.get("/teacher/class")
+def teacher_class():
+    with db.connect() as conn:
+        pupils = conn.execute("SELECT id, first_name, class_no, grade, latest_tip FROM pupils").fetchall()
+        readings = conn.execute("SELECT id, pupil_id, read_at, seconds_taken, words_correct, total_words, "
+                                "red_words FROM readings ORDER BY read_at").fetchall()
+        missed = conn.execute("SELECT reading_id, still_missed FROM practice").fetchall()
+
+    still_missed = {}
+    for m in missed:
+        still_missed.setdefault(m["reading_id"], []).extend(db.from_json(m["still_missed"]))
+    by_pupil = {}
+    for r in readings:
+        by_pupil.setdefault(r["pupil_id"], []).append(r)
+
+    result = []
+    for p in pupils:
+        last5 = by_pupil.get(p["id"], [])[-5:]  # oldest -> newest
+        counts = Counter()
+        for r in last5:  # trouble words = red words + words still missed after practice
+            counts.update(db.from_json(r["red_words"]))
+            counts.update(still_missed.get(r["id"], []))
+        latest = last5[-1] if last5 else None
+        result.append({
+            "id": p["id"],
+            "first_name": p["first_name"],
+            "class_no": p["class_no"],
+            "grade": p["grade"],
+            "latest_accuracy": round(latest["words_correct"] / latest["total_words"], 2) if latest else None,
+            "latest_words_correct": latest["words_correct"] if latest else None,
+            "latest_total_words": latest["total_words"] if latest else None,
+            "latest_seconds": latest["seconds_taken"] if latest else None,
+            "trouble_words": [w for w, _ in counts.most_common(5)],
+            "tip": p["latest_tip"],
+            "last5": [round(r["words_correct"] / r["total_words"], 2) for r in last5],
+            "last_read_at": latest["read_at"] if latest else None,
+        })
+    return result
 
 
 # ---------- Frontend (mounted last so API routes win) ----------

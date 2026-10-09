@@ -1,9 +1,24 @@
 # Python 3.12 recommended (demo laptop). Install with:
 #   venv\Scripts\python.exe -m pip install -r requirements.txt
-fastapi>=0.115
-uvicorn>=0.30
-python-multipart>=0.0.9
-python-dotenv>=1.0
-faster-whisper>=1.1
+# Exact versions that work together (tested; all have Python 3.12 Windows wheels).
+# Change a version only after testing Read and Check end to end.
+
+fastapi==0.143.0
+uvicorn==0.54.0
+python-multipart==0.0.32
+python-dotenv==1.2.4
+
+# Local speech to text. Keep faster-whisper, ctranslate2 and av pinned TOGETHER:
+# with this exact faster-whisper + av combination, giving Whisper a file PATH crashes
+# (av.open() no longer accepts "metadata_errors"). Dinig avoids that by passing audio
+# samples instead (backend/ai/local_models.py, _read_wav), so this combination works.
+faster-whisper==1.2.1
+ctranslate2==4.8.2
+av==19.0.1
+tokenizers==0.23.3
+onnxruntime==1.31.0
+huggingface_hub==2.2.0
+numpy==2.5.3
+
 # Includes an ffmpeg.exe, so no separate ffmpeg install or PATH setup is needed
-imageio-ffmpeg>=0.5
+imageio-ffmpeg==0.6.0

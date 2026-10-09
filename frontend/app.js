@@ -232,38 +232,204 @@ onEnter["my-result"] = () => {
     box.appendChild(el("span", { class: `w w-${w.status}` }, w.word));
     box.appendChild(document.createTextNode(" "));
   });
+  loadQuiz(); // fetch questions now so Story Quiz opens without waiting
 };
 $("#result-next").addEventListener("click", () => go("story-quiz"));
 
-// ---------- Story Quiz / Practice Again (stubbed in Step 3) ----------
+// ---------- Record button helper (Story Quiz and Practice Again) ----------
+// First tap starts the mic ("Done" appears), second tap stops it and calls onAudio(blob).
 
-onEnter["story-quiz"] = () => {
-  $("#quiz-count").textContent = "";
-  $("#quiz-question").textContent = "(Questions come in Step 3.)";
-  $("#quiz-next").classList.remove("hidden");
-};
-$("#quiz-next").addEventListener("click", () => go("practice-again"));
+function recordButton(btn, listening, startLabel, onAudio) {
+  btn.addEventListener("click", async () => {
+    if (!btn.classList.contains("recording")) {
+      try {
+        await mic.start();
+      } catch (err) {
+        onAudio(null, micErrorText(err));
+        return;
+      }
+      btn.textContent = "Done";
+      btn.classList.add("recording");
+      listening.classList.remove("hidden");
+    } else {
+      btn.disabled = true;
+      btn.classList.remove("recording");
+      listening.classList.add("hidden");
+      btn.textContent = "Checking...";
+      const audio = await mic.stop();
+      await onAudio(audio);
+      btn.textContent = startLabel;
+      btn.disabled = false;
+    }
+  });
+}
 
-onEnter["practice-again"] = () => {
-  $("#practice-sentences").textContent = "(Practice sentences come in Step 3.)";
-  $("#practice-next").classList.remove("hidden");
+function showFeedback(node, text) {
+  node.textContent = text;
+  node.classList.remove("hidden");
+}
+
+// ---------- Story Quiz ----------
+// Questions are fetched while My Result is showing, so they are usually ready.
+
+const quiz = { questions: null, index: 0, loading: null };
+
+function loadQuiz() {
+  quiz.questions = null;
+  quiz.index = 0;
+  quiz.loading = api(`/quiz/${state.reading.reading_id}`)
+    .then((q) => (quiz.questions = q.questions))
+    .catch(() => (quiz.questions = []));
+}
+
+function hasPracticeWords() {
+  return state.reading.words.some((w) => w.status === "red");
+}
+
+async function showQuestion() {
+  $("#quiz-feedback").classList.add("hidden");
+  $("#quiz-next").classList.add("hidden");
+  $("#quiz-btn").classList.remove("hidden");
+  if (!quiz.questions) {
+    $("#quiz-question").textContent = "Getting your questions ready...";
+    await quiz.loading;
+  }
+  if (!quiz.questions.length) return go(hasPracticeWords() ? "practice-again" : "all-done");
+  const q = quiz.questions[quiz.index];
+  $("#quiz-count").textContent = `${quiz.index + 1} of ${quiz.questions.length}`;
+  $("#quiz-question").textContent = q.question;
+}
+
+onEnter["story-quiz"] = showQuestion;
+
+recordButton($("#quiz-btn"), $("#quiz-listening"), "Answer", async (audio, error) => {
+  if (!audio) return showFeedback($("#quiz-feedback"), error);
+  const q = quiz.questions[quiz.index];
+  const form = new FormData();
+  form.append("reading_id", state.reading.reading_id);
+  form.append("question", q.question);
+  if (q.question_id) form.append("question_id", q.question_id);
+  form.append("audio", audio, "answer.webm");
+  try {
+    const r = await api("/quiz/answer", { method: "POST", body: form });
+    showFeedback($("#quiz-feedback"), r.message);
+    $("#quiz-btn").classList.add("hidden");
+    $("#quiz-next").classList.remove("hidden");
+  } catch {
+    showFeedback($("#quiz-feedback"), "Let's try again! Tap Answer and say it out loud.");
+  }
+});
+
+$("#quiz-next").addEventListener("click", () => {
+  quiz.index += 1;
+  if (quiz.index < quiz.questions.length) showQuestion();
+  else go(hasPracticeWords() ? "practice-again" : "all-done");
+});
+
+// ---------- Practice Again ----------
+
+const practice = { id: null, targets: [] };
+
+onEnter["practice-again"] = async () => {
+  $("#practice-result").classList.add("hidden");
+  $("#practice-next").classList.add("hidden");
+  $("#practice-btn").classList.remove("hidden");
+  const box = $("#practice-sentences");
+  box.textContent = "Getting your practice words ready...";
+  try {
+    const p = await api("/practice", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ reading_id: state.reading.reading_id }),
+    });
+    practice.id = p.practice_id;
+    practice.targets = p.target_words;
+    box.textContent = "";
+    p.sentences.forEach((s) => {
+      const line = el("p");
+      s.split(" ").forEach((word) => {
+        const target = p.target_words.includes(word.toLowerCase().replace(/[^\p{L}\p{N}]/gu, ""));
+        line.appendChild(target ? el("span", { class: "w w-red" }, word) : document.createTextNode(word));
+        line.appendChild(document.createTextNode(" "));
+      });
+      box.appendChild(line);
+    });
+  } catch {
+    go("all-done");
+  }
 };
+
+function wrongWords(n) {
+  return `${n} wrong word${n === 1 ? "" : "s"}`;
+}
+
+recordButton($("#practice-btn"), $("#practice-listening"), "Start", async (audio, error) => {
+  if (!audio) return showFeedback($("#practice-result"), error);
+  const form = new FormData();
+  form.append("audio", audio, "practice.webm");
+  try {
+    const r = await api(`/practice/${practice.id}/check`, { method: "POST", body: form });
+    showFeedback($("#practice-result"), `Before: ${wrongWords(r.wrong_before)}. Now: ${wrongWords(r.wrong_after)}.`);
+    $("#practice-btn").classList.add("hidden");
+    $("#practice-next").classList.remove("hidden");
+  } catch {
+    showFeedback($("#practice-result"), "Let's try again! Tap Start and read the sentences.");
+  }
+});
+
 $("#practice-next").addEventListener("click", () => go("all-done"));
 
-// ---------- Class View (filled in Step 3) ----------
+// ---------- Teacher's Class View (with Heatmap) ----------
+
+let classData = [];
+
+function band(accuracy) {
+  if (accuracy === null || accuracy === undefined) return "none";
+  if (accuracy >= 0.9) return "good";
+  if (accuracy >= 0.75) return "almost";
+  return "help";
+}
+
+function renderClass() {
+  const sort = $("#sort-select").value;
+  const rows = [...classData];
+  if (sort === "help") {
+    // lowest score first; pupils with no reading yet go last
+    rows.sort((a, b) => (a.latest_accuracy ?? 2) - (b.latest_accuracy ?? 2));
+  } else {
+    rows.sort((a, b) => (b.last_read_at || "").localeCompare(a.last_read_at || ""));
+  }
+  const newest = classData.reduce((best, p) => (p.last_read_at && (!best || p.last_read_at > best.last_read_at) ? p : best), null);
+
+  const tbody = $("#class-rows");
+  tbody.textContent = "";
+  rows.forEach((p) => {
+    const tr = el("tr", newest && p.id === newest.id ? { class: "newest" } : {});
+    tr.appendChild(el("td", {}, p.class_no ? `${p.first_name} (${p.class_no})` : p.first_name));
+    tr.appendChild(el("td", {}, p.latest_accuracy === null ? "–"
+      : `${Math.round(p.latest_accuracy * 100)}% (${p.latest_words_correct}/${p.latest_total_words})`));
+    tr.appendChild(el("td", {}, p.latest_seconds === null ? "–" : formatTime(p.latest_seconds)));
+    tr.appendChild(el("td", {}, p.trouble_words.join(", ") || "–"));
+    tr.appendChild(el("td", {}, p.tip || "–"));
+    const heat = el("div", { class: "heat" });
+    for (let i = 0; i < 5; i++) {
+      const acc = p.last5[i];
+      heat.appendChild(el("span", { class: `cell ${band(acc)}` }, acc === undefined ? "–" : String(Math.round(acc * 100))));
+    }
+    const td = el("td");
+    td.appendChild(heat);
+    tr.appendChild(td);
+    tbody.appendChild(tr);
+  });
+}
 
 onEnter["class-view"] = async () => {
   refreshStatus();
-  const rows = $("#class-rows");
-  rows.textContent = "";
-  const pupils = await api("/pupils");
-  pupils.forEach((p) => {
-    const tr = el("tr");
-    tr.appendChild(el("td", {}, p.first_name));
-    ["–", "–", "–", "–", "–"].forEach((t) => tr.appendChild(el("td", {}, t)));
-    rows.appendChild(tr);
-  });
+  classData = await api("/teacher/class");
+  renderClass();
 };
+
+$("#sort-select").addEventListener("change", renderClass);
 
 $("#add-pupil").addEventListener("submit", async (e) => {
   e.preventDefault();

@@ -27,23 +27,51 @@ def score_words(story_text: str, transcript: str) -> list[dict]:
       replace -> child said something else   -> red
       delete  -> story words with no match   -> grey (skipped)
       insert  -> extra words (repeats, restarts) -> ignored, never red
+    Story names (like "Lito") are green on a close spelling match, because
+    Whisper often spells names a little differently ("Leto").
     """
-    # TODO [BACKEND]: on the dev laptop (tiny.en) names like "Lito" and "Nena" came back red even when read
-    # correctly. Re-test with Whisper small on the demo laptop; if names still fail, consider counting a
-    # story's proper names as green when the child said a close match.
     tokens = story_tokens(story_text)            # what we display, punctuation kept
     story = [normalize(t) for t in tokens]        # what we compare
     said = words(transcript)
+    names = _story_names(tokens)
 
     status = ["grey"] * len(story)
     matcher = SequenceMatcher(a=story, b=said, autojunk=False)
-    for tag, i1, i2, _j1, _j2 in matcher.get_opcodes():
+    for tag, i1, i2, j1, j2 in matcher.get_opcodes():
         if tag == "equal":
             status[i1:i2] = ["green"] * (i2 - i1)
         elif tag == "replace":
-            status[i1:i2] = ["red"] * (i2 - i1)
+            for i in range(i1, i2):
+                close = story[i] in names and any(_close_match(story[i], h) for h in said[j1:j2])
+                status[i] = "green" if close else "red"
         # "delete" stays grey; "insert" touches no story word
     return [{"word": t, "status": s} for t, s in zip(tokens, status)]
+
+
+def _story_names(tokens: list[str]) -> set[str]:
+    """Capitalized words that are names: either capitalized in the middle of a sentence
+    ("Nena"), or always capitalized and used at least twice ("Lito" at two sentence starts).
+    One-time sentence starters like "Every" or "The" are not names."""
+    capitalized_mid, capitalized_count, lowercase = set(), {}, set()
+    sentence_start = True
+    for tok in tokens:
+        bare = tok.lstrip("\"'“‘")
+        starts = sentence_start or bare != tok  # a quote also starts a sentence
+        word = normalize(tok)
+        if bare[:1].isupper():
+            capitalized_count[word] = capitalized_count.get(word, 0) + 1
+            if not starts:
+                capitalized_mid.add(word)
+        else:
+            lowercase.add(word)
+        sentence_start = tok.rstrip("\"'”’").endswith((".", "!", "?"))
+    repeated = {w for w, n in capitalized_count.items() if n >= 2 and w not in lowercase}
+    return capitalized_mid | repeated
+
+
+def _close_match(name: str, heard: str) -> bool:
+    """Small spelling difference only: same first letter and 70% similar ("lito" ~ "leto")."""
+    return heard[:1] == name[:1] and SequenceMatcher(None, name, heard).ratio() >= 0.7
 
 
 def summarize(result: list[dict]) -> dict:

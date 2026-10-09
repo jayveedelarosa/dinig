@@ -57,6 +57,7 @@ Nothing else in the app knows which plan is used. A setting `READING_CHECK = "pl
    - `replace` → those story words are **red** (the child said something else)
    - `delete` (story words with no match) → **grey** (skipped)
    - `insert` (extra words, repeats or restarts by the child) → **ignored**, never red
+   - **Story names** (a word capitalized mid-sentence, or capitalized at least twice and never lowercase, like "Lito" or "Nena") count as **green** when the child's word is a close spelling match (same first letter, 70% similar), because Whisper often spells names a little differently. A name used only once at the start of a sentence is not detected, so story writers should use names mid-sentence or more than once. [CHANGED]
 - Known risk: Whisper may "autocorrect" a misread word into the right one, which would make that word look correct. Our backend dev's first test decides whether this is a problem: **OPEN QUESTION.**
 
 **Plan B (if testing shows that risk): MMS forced alignment**

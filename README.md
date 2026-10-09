@@ -101,9 +101,10 @@ Double-click **`start_dinig.bat`**. It starts the server (minimized window "Dini
 | "Dinig did not start" / port 8000 in use | Close any old "Dinig server" window and try again. If still stuck: `netstat -ano | findstr :8000`, then `taskkill /PID <number> /F`. |
 | Want a clean demo | `venv\Scripts\python.exe backend\seed.py` |
 
-For developers, run the server with live reload instead of the launcher:
+For developers, run the server with live reload instead of the launcher, and run the reading check tests:
 ```
 venv\Scripts\python.exe -m uvicorn backend.main:app --host 127.0.0.1 --port 8000 --reload
+venv\Scripts\python.exe tests\test_reading_check.py
 ```
 
 Minimum laptop: 8GB RAM, no graphics card. Tested on: OPEN QUESTION (demo laptop not chosen yet). Speed: OPEN QUESTION until measured on the demo laptop.
