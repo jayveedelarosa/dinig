@@ -77,7 +77,7 @@ STORIES = [
 # (first name, grade, level). Levels: good ~90%+, almost ~75-89%, help <75%.
 PUPILS = [
     ("Bea", 3, "good"), ("Carlo", 3, "almost"), ("Dindo", 4, "help"), ("Ella", 3, "good"),
-    ("Franco", 4, "almost"), ("Gabby", 3, "help"), ("Hannah", 4, "good"), ("Isko", 3, "almost"),
+    ("Franco", 4, "almost"), ("Gabby", 3, "help"), ("Hiraya", 4, "good"), ("Isko", 3, "almost"),
     ("Jun", 4, "help"), ("Kyla", 3, "almost"),
 ]
 DEMO_PUPIL = ("Mika", 3)  # no readings yet: the live demo result is clearly new
