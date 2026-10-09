@@ -1,0 +1,24 @@
+# Python
+__pycache__/
+*.pyc
+venv/
+.venv/
+
+# Secrets and local settings
+.env
+
+# Big model files (download them, never upload)
+models/
+*.bin
+*.gguf
+*.pt
+*.onnx
+
+# Local data and recordings
+data/*.db
+*.wav
+*.webm
+temp/
+
+# Our private notes
+prompts.txt
