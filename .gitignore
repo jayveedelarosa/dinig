@@ -27,3 +27,9 @@ prompts.txt
 
 # Designer's Figma Make prototype (reference only)
 design-ref/
+
+# Teacher installer build (large; made by packaging\build_setup.bat on Windows)
+packaging/staging/
+packaging/output/
+packaging/redist/
+packaging/*.zip

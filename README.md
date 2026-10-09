@@ -92,7 +92,7 @@ Double-click **`start_dinig.bat`**. It starts the server (minimized window "Dini
 ### Troubleshooting
 | Problem | Fix |
 | --- | --- |
-| "venv\Scripts\python.exe was not found" | Step 3 was skipped. Run it in the `dinig` folder. |
+| "python\python.exe and venv\Scripts\python.exe were not found" | A developer laptop skipped step 3. A teacher laptop should run `DinigSetup.exe` instead of this folder. |
 | Whisper download is slow or stopped | Run `venv\Scripts\python.exe backend\download_models.py` again: it resumes where it stopped. It shows MB downloaded so far. |
 | Status says "Missing: Whisper" | Run `venv\Scripts\python.exe backend\download_models.py` (with internet), then restart. |
 | Status says "Qwen not running" | Open Ollama from the Start menu, and check `ollama list` shows `qwen2.5:3b` (or the model in `.env`). Reading still works; quiz and tips use pre-written backups. |
@@ -110,6 +110,16 @@ venv\Scripts\python.exe tests\test_reading_check.py
 Minimum laptop: 8GB RAM, no graphics card. Tested on: OPEN QUESTION (demo laptop not chosen yet). Speed: OPEN QUESTION until measured on the demo laptop.
 
 ---
+
+## Teacher installer (Windows wizard)
+
+On a Windows laptop that has internet, install [Inno Setup 6](https://jrsoftware.org/isdl.php), then double-click `packaging\build_setup.bat`. It downloads Python, Whisper, Qwen 3B and 1.5B, and the Ollama installer, and writes `packaging\output\DinigSetup.exe` (about 4GB). Copy that file to a USB.
+
+On the teacher laptop, double-click **DinigSetup.exe**. If Windows says it protected your PC, choose **More info**, then **Run anyway**. The wizard does not ask for an administrator password. It needs about 6GB free. Pick Qwen 3B, or 1.5B when the laptop feels full. Finish leaves a **Dinig** icon on the Desktop. She uses that icon every time. The first time, she clicks **Allow** when the browser asks for the microphone.
+
+The icon opens Edge, then Chrome, in a window with no tabs. With neither installed, it opens the usual browser. An offline Edge installer is not inside the wizard, because that installer asks for an administrator.
+
+A later install does not replace `data\dinig.db` or an existing `.env`, so the class and the model choice stay.
 
 ## Disclosures
 - **Models used:**

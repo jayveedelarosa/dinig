@@ -8,3 +8,4 @@ Open only what the task needs.
 | SITEMAP.md | Every screen and how they connect | Adding or changing a page |
 | BRAND.md | Target user behavior, colors, fonts, tone | Any UI or text work |
 | API.md | Every API route with request and response | Connecting frontend and backend |
+| FUTURE.md | Plans we are not building yet | Deciding a later addition |

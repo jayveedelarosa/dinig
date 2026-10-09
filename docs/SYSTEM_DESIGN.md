@@ -83,14 +83,15 @@ The same module also scores the Practice Again sentences.
 | Qwen too slow or out of memory on 8GB | — | Set `OLLAMA_MODEL=qwen2.5:1.5b` in `.env` and restart [CHANGED] |
 
 ## Desktop launcher (start_dinig.bat) [CHANGED]
-The teacher or parent double-clicks `start_dinig.bat` in the project root. It runs these steps:
+The teacher or parent double-clicks the **Dinig** Desktop icon (or `start_dinig.bat` in the project root). It runs these steps:
 1. `cd /d %~dp0` to go to the app folder.
 2. Set `HF_HUB_OFFLINE=1`, so faster-whisper never tries to reach the internet. Whisper loads from its local folder (`WHISPER_MODEL_DIR` in `.env`, for example `models\faster-whisper-small`).
-3. Start `ollama serve` minimized if Ollama is not already running.
-4. Start the server minimized, in a window titled "Dinig server", with the project's virtual environment Python, **not** whatever `python` is on the PATH:
-   `venv\Scripts\python.exe -m uvicorn backend.main:app --host 127.0.0.1 --port 8000`
-5. Check `curl -s http://localhost:8000/health` every second until it answers. (`curl` is built into Windows.)
-6. Run `start "" msedge --app=http://localhost:8000`. Dinig opens on Home in its own window, with no tabs or address bar.
+3. If `models\ollama` exists, set `OLLAMA_MODELS` to that folder so Qwen is the copy installed with Dinig.
+4. Start `ollama serve` minimized if Ollama is not already running.
+5. Start the server minimized, in a window titled "Dinig server", with Python inside the app (`python\python.exe` from the teacher installer, or `venv\Scripts\python.exe` on a developer laptop), **not** whatever `python` is on the PATH:
+   `python.exe -m uvicorn backend.main:app --host 127.0.0.1 --port 8000`
+6. Check `curl -s http://127.0.0.1:8000/health` every second until it answers. (`curl` is built into Windows.)
+7. Open `http://localhost:8000` in its own window, with no tabs or address bar. It looks for **Edge**, then **Chrome**. If neither is installed, it opens the usual browser.
 
 Notes:
 - Closing the Edge window does not stop the server. To stop Dinig, close the minimized "Dinig server" window.
