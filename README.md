@@ -92,6 +92,7 @@ Double-click **`start_dinig.bat`**. It starts the server (minimized window "Dini
 | Problem | Fix |
 | --- | --- |
 | "venv\Scripts\python.exe was not found" | Step 3 was skipped. Run it in the `dinig` folder. |
+| Whisper download is slow or stopped | Run `venv\Scripts\python.exe backend\download_models.py` again: it resumes where it stopped. It shows MB downloaded so far. |
 | Status says "Missing: Whisper" | Run `venv\Scripts\python.exe backend\download_models.py` (with internet), then restart. |
 | Status says "Qwen not running" | Open Ollama from the Start menu, and check `ollama list` shows `qwen2.5:3b` (or the model in `.env`). Reading still works; quiz and tips use pre-written backups. |
 | Qwen is very slow or the laptop freezes | In `.env` set `OLLAMA_MODEL=qwen2.5:1.5b`, close both Dinig windows, start again. |
