@@ -110,47 +110,128 @@ onEnter["pick-story"] = async () => {
   });
 };
 
+// ---------- Microphone (MediaRecorder, records .webm in the browser) ----------
+// The audio goes only to our own server on localhost, which deletes it after scoring.
+
+const mic = {
+  recorder: null,
+  chunks: [],
+  async start() {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    const type = MediaRecorder.isTypeSupported("audio/webm;codecs=opus") ? "audio/webm;codecs=opus" : "audio/webm";
+    this.chunks = [];
+    this.recorder = new MediaRecorder(stream, { mimeType: type });
+    this.recorder.ondataavailable = (e) => e.data.size && this.chunks.push(e.data);
+    this.recorder.start();
+  },
+  stop() {
+    return new Promise((resolve) => {
+      if (!this.recorder) return resolve(null);
+      this.recorder.onstop = () => {
+        this.recorder.stream.getTracks().forEach((t) => t.stop()); // turn the mic off
+        this.recorder = null;
+        resolve(new Blob(this.chunks, { type: "audio/webm" }));
+      };
+      this.recorder.stop();
+    });
+  },
+  cancel() { if (this.recorder) this.stop(); },
+};
+
+function micErrorText(err) {
+  if (err && err.name === "NotAllowedError") return "Please ask your teacher to allow the microphone.";
+  if (err && err.name === "NotFoundError") return "No microphone found. Please plug one in.";
+  return "The microphone is not working. Please ask your teacher.";
+}
+
 // ---------- Read Aloud ----------
-// Step 1: Start/Done and timer only. Step 2 adds the microphone recording.
 
 let timerId = null;
 let startedAt = 0;
+
+function resetReadAloud(message = "") {
+  clearInterval(timerId);
+  $("#read-btn").textContent = "Start";
+  $("#read-btn").disabled = false;
+  $("#read-btn").classList.remove("recording");
+  $("#listening").classList.add("hidden");
+  $("#timer").textContent = "0:00";
+  $("#mic-error").textContent = message;
+  $("#mic-error").classList.toggle("hidden", !message);
+}
 
 onEnter["read-aloud"] = () => {
   $("#story-title").textContent = state.story.title;
   $("#story-text").textContent = state.story.full_text;
   $("#placeholder-note").classList.toggle("hidden", !state.story.placeholder);
-  $("#read-btn").textContent = "Start";
-  $("#read-btn").classList.remove("recording");
-  $("#listening").classList.add("hidden");
-  $("#timer").textContent = "0:00";
+  resetReadAloud();
 };
 
-$("#read-back").addEventListener("click", () => { clearInterval(timerId); go("pick-story"); });
+$("#read-back").addEventListener("click", () => { mic.cancel(); resetReadAloud(); go("pick-story"); });
 
-$("#read-btn").addEventListener("click", () => {
+$("#read-btn").addEventListener("click", async () => {
   const btn = $("#read-btn");
   if (btn.textContent === "Start") {
+    try {
+      await mic.start();
+    } catch (err) {
+      resetReadAloud(micErrorText(err));
+      return;
+    }
     startedAt = Date.now();
     timerId = setInterval(() => ($("#timer").textContent = formatTime((Date.now() - startedAt) / 1000)), 250);
     btn.textContent = "Done";
     btn.classList.add("recording");
     $("#listening").classList.remove("hidden");
+    $("#mic-error").classList.add("hidden");
   } else {
+    btn.disabled = true;
     clearInterval(timerId);
+    const seconds = (Date.now() - startedAt) / 1000;
+    const audio = await mic.stop();
     go("checking");
-    // TODO [FRONTEND] Step 2: send the recording to POST /readings.
-    setTimeout(() => go("my-result"), 800);
+    await sendReading(audio, seconds);
   }
 });
 
+// ---------- Checking: POST /readings ----------
+
+async function sendReading(audio, seconds) {
+  const form = new FormData();
+  form.append("pupil_id", state.pupil.id);
+  form.append("story_id", state.story.id);
+  form.append("seconds_taken", seconds.toFixed(1));
+  form.append("audio", audio, "reading.webm");
+  try {
+    state.reading = await api("/readings", { method: "POST", body: form });
+    go("my-result");
+  } catch {
+    go("read-aloud");
+    resetReadAloud("Let's try again! Tap Start and read the story.");
+  }
+}
+
 // ---------- My Result ----------
 
+function kindMessage(correct, total) {
+  const name = state.pupil.first_name;
+  const ratio = total ? correct / total : 0;
+  if (ratio >= 0.9) return `Great reading, ${name}!`;
+  if (ratio >= 0.75) return `Good job, ${name}! Keep going!`;
+  return `Nice try, ${name}! Let's practice together.`;
+}
+
 onEnter["my-result"] = () => {
-  $("#result-message").textContent = "Great reading!";
-  $("#result-score").textContent = "";
-  $("#result-time").textContent = "";
-  $("#result-words").textContent = "(Your colored words will appear here.)";
+  const r = state.reading;
+  $("#result-message").textContent = kindMessage(r.words_correct, r.total_words);
+  $("#result-score").textContent = `${r.words_correct} of ${r.total_words} words correct`;
+  $("#result-time").textContent = `Time: ${formatTime(r.seconds_taken)}`;
+  const box = $("#result-words");
+  box.textContent = "";
+  r.words.forEach((w) => {
+    box.appendChild(el("span", { class: `w w-${w.status}` }, w.word));
+    box.appendChild(document.createTextNode(" "));
+  });
 };
 $("#result-next").addEventListener("click", () => go("story-quiz"));
 

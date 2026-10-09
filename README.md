@@ -67,6 +67,7 @@ ollama pull qwen2.5:1.5b
 ```
 - Whisper small (about 470MB) goes to `models\faster-whisper-small`.
 - Qwen2.5 3B (about 1.9GB) is the default. Qwen2.5 1.5B is the fallback for slow or full 8GB laptops.
+- **Developer laptop with less than 8GB RAM (not for the demo):** download the tiny English model instead with `venv\Scripts\python.exe backend\download_models.py tiny.en`, and in `.env` set `WHISPER_MODEL_DIR=models/faster-whisper-tiny.en`. It is less accurate; the demo always uses small.
 
 ### 5. Settings and sample data
 ```

@@ -22,7 +22,7 @@ def to_wav(src: Path) -> Path:
         raise RuntimeError("ffmpeg not found. Run: venv\\Scripts\\python.exe -m pip install imageio-ffmpeg")
     dst = src.with_suffix(".wav")
     subprocess.run(
-        [exe, "-y", "-loglevel", "error", "-i", str(src), "-ac", "1", "-ar", "16000", str(dst)],
+        [exe, "-y", "-loglevel", "error", "-i", str(src), "-ac", "1", "-ar", "16000", "-c:a", "pcm_s16le", str(dst)],
         check=True,
         capture_output=True,
     )

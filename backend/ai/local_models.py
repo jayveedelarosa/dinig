@@ -48,13 +48,29 @@ def transcribe(wav_path, language: str = "en") -> str:
     is less likely to "autocorrect" a misread word into the right one."""
     if _whisper is None:
         raise RuntimeError("Whisper is not loaded")
+    if not _whisper.model.is_multilingual:
+        language = None  # English-only model (tiny.en on the dev laptop)
+    elif language == "fil":
+        language = "tl"  # Whisper's code for Tagalog/Filipino
     segments, _info = _whisper.transcribe(
-        str(wav_path),
+        _read_wav(wav_path),
         language=language,
         beam_size=1,  # faster on CPU; tune after measuring on the demo laptop
         condition_on_previous_text=False,
     )
     return " ".join(seg.text.strip() for seg in segments).strip()
+
+
+def _read_wav(wav_path):
+    """Read the 16kHz mono 16-bit .wav that ffmpeg made, as float32 samples.
+    We pass samples instead of a file path so faster-whisper skips its own
+    PyAV decoding (PyAV version changes broke it once)."""
+    import wave
+
+    import numpy as np  # installed with faster-whisper
+    with wave.open(str(wav_path), "rb") as w:
+        frames = w.readframes(w.getnframes())
+    return np.frombuffer(frames, dtype=np.int16).astype(np.float32) / 32768.0
 
 
 def ollama_ready() -> bool:

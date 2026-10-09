@@ -9,9 +9,15 @@ Qwen is downloaded separately with: ollama pull qwen2.5:3b
 Plain HTTP with resume: if the internet drops, run it again and it continues
 where it stopped (school internet is often slow or unstable).
 """
+import socket
 import sys
 import urllib.request
 from pathlib import Path
+
+# Use IPv4 only. On networks with broken IPv6 (common on school Wi-Fi) Python
+# waits minutes per request before falling back; curl falls back instantly.
+_getaddrinfo = socket.getaddrinfo
+socket.getaddrinfo = lambda host, port, family=0, *args, **kw: _getaddrinfo(host, port, socket.AF_INET, *args, **kw)
 
 ROOT = Path(__file__).resolve().parent.parent
 MODELS = {

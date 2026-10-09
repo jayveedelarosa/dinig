@@ -49,6 +49,7 @@ body.teacher { background: var(--bg-teacher); font-family: "Atkinson Hyperlegibl
 .btn-secondary { background: var(--card); color: var(--primary); border: 3px solid var(--primary); }
 .btn-back { background: transparent; color: var(--primary); border: 2px solid var(--primary); min-height: 48px; }
 .btn-small { padding: 6px 14px; }
+/* TODO [FRONTEND]: the recording "Done" button uses the practice-word red; pick a calmer recording color with the designer. */
 .btn.recording { background: var(--red-text); }
 
 /* Home */
@@ -88,6 +89,7 @@ body.teacher { background: var(--bg-teacher); font-family: "Atkinson Hyperlegibl
 /* My Result: word colors + shape cues for color-blind users */
 .score-row { display: flex; gap: 32px; align-items: baseline; margin-bottom: 16px; }
 .score { font-size: 1.5em; font-weight: 700; }
+/* TODO [FRONTEND]: with every word in a green box the result is busy; try a lighter green so red/grey stand out. */
 .w { padding: 0 6px; border-radius: 6px; margin: 0 1px; }
 .w-green { color: var(--green-text); background: var(--green-bg); }
 .w-red { color: var(--red-text); background: var(--red-bg); text-decoration: underline wavy var(--red-text); text-underline-offset: 6px; }
