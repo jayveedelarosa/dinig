@@ -19,7 +19,7 @@ The World Bank estimates that 91% of 10-year-old Filipino children are in learni
 
 ## Demo
 
-Demo video and post: [LinkedIn link coming soon](LINKEDIN_LINK_HERE)
+Demo video and post: https://lnkd.in/p/gBYveE4p
 
 ![Home, ready on this laptop](docs/screenshots/home.png)
 
@@ -109,10 +109,6 @@ The window looks for Microsoft Edge, then Google Chrome. If neither is installed
 
 To stop Dinig, close the Dinig window, then close the minimized "Dinig server" window.
 
-## Minimum laptop
-
-8GB RAM, no graphics card needed.
-
 ## Disclosures
 
 - **Models used:**
@@ -122,9 +118,8 @@ To stop Dinig, close the Dinig window, then close the minimized "Dinig server" w
   - Plan B (an MMS aligner) is not used.
 - **Technologies:** Python, FastAPI, SQLite, HTML/CSS/JS, Ollama, ffmpeg (via imageio-ffmpeg), Microsoft Edge or Chrome in app mode.
 - **APIs and cloud services:** None.
-- **Existing code and assets:** fonts Andika (SIL), Atkinson Hyperlegible (Braille Institute), and Nunito, all SIL Open Font License. The license files are in `frontend/fonts/`. The UI design was made by Jerich in Figma Make during the hackathon. Everything else was built during the hackathon.
+- **Existing code and assets:** fonts Andika (SIL), Atkinson Hyperlegible (Braille Institute), and Nunito, all SIL Open Font License. The license files are in `frontend/fonts/`. The UI design was made by Jerich in Figma Make during the hackathon. Everything else was built during the hackathon. The Dindin mascot and logo were made by Jerich De Venecia during the hackathon.
 - **AI development tools:** Claude Code (building and testing), Codex (Qwen integration), Figma Make (UI design), Claude chat (planning).
-- The Dindin mascot and logo were made by Jerich De Venecia during the hackathon.
 
 ## Team
 
@@ -137,10 +132,3 @@ Bian Avan Toledo: Backend and local AI. Whisper speech checking, Qwen integratio
 Jerich De Venecia: Frontend and design. UI design in Figma Make, the Dindin mascot and logo.
 
 Jersylle Nismal: Research and pitch. Stories, problem research, pitch.
-
-## Limitations
-
-- The sample class has 3 English stories.
-- Whisper's accuracy on Filipino-accented English has not been measured.
-- If Qwen is slow or not running, the quiz uses 2 saved questions and Practice Again uses simple template sentences. The reading check still runs.
-- Speed on an 8GB laptop has not been measured yet.
