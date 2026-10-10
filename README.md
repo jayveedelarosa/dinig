@@ -8,7 +8,7 @@ Dinig: pupils read stories aloud and get instant word-by-word feedback, fully of
 
 Many Filipino pupils struggle to read a simple text. One teacher cannot listen to every child read aloud every day. Many public schools have weak internet or none, so a reading app that needs the cloud does not reach them.
 
-TODO: Add Hannah's figures here, each with a link. Do not add a number that has no source.
+The World Bank estimates that 91% of 10-year-old Filipino children are in learning poverty, meaning they cannot read and understand a simple text ([source](https://newsinfo.inquirer.net/1632864/wb-ph-learning-poverty-among-highest-in-region)).
 
 ## Why does this product benefit from running AI locally?
 
@@ -16,19 +16,14 @@ TODO: Add Hannah's figures here, each with a link. Do not add a number that has 
 - Children's voices never leave the laptop. The recording is scored on the machine and deleted. Only the score, the time, and the trouble words are saved.
 - There is no per-use cost for schools.
 - It runs on the 8GB laptops schools already have. No graphics card is required.
-- TODO: Add one real measured line, and only after it is timed on the demo laptop. Example shape: "Checks a reading in X seconds on our 8GB laptop."
 
 ## Demo
 
-TODO: 1-minute video link
-
-TODO: X or LinkedIn post link
+Demo video and post: [LinkedIn link coming soon](LINKEDIN_LINK_HERE)
 
 ![Home, ready on this laptop](docs/screenshots/home.png)
 
 ![Read Aloud](docs/screenshots/read-aloud.png)
-
-TODO: screenshot of My Result, with words marked and the pill saying "AI ready"
 
 ![Class View, with the pill saying AI ready](docs/screenshots/class-view.png)
 
@@ -54,7 +49,7 @@ Recordings are deleted after checking. Read and Check, the quiz, and Practice Ag
 
 ## What requires internet
 
-TODO: Turn Wi-Fi off, read a story, and finish the quiz. If that works, replace this TODO with only this sentence: "Nothing during use. Internet is only needed once, during setup, to download the models."
+Nothing during use. Internet is only needed once, during setup, to download the models.
 
 ## Run it yourself (Windows)
 
@@ -114,17 +109,9 @@ The window looks for Microsoft Edge, then Google Chrome. If neither is installed
 
 To stop Dinig, close the Dinig window, then close the minimized "Dinig server" window.
 
-## Minimum laptop and measured speed
+## Minimum laptop
 
-8GB RAM, no graphics card needed. Tested on: TODO exact laptop model.
-
-TODO: measured times on that laptop. Do not fill this table with guesses.
-
-| Step | Time |
-| --- | --- |
-| Reading check (tap Done until the colored words appear) | TODO |
-| Quiz questions | TODO |
-| Practice sentences | TODO |
+8GB RAM, no graphics card needed.
 
 ## Disclosures
 
@@ -137,16 +124,23 @@ TODO: measured times on that laptop. Do not fill this table with guesses.
 - **APIs and cloud services:** None.
 - **Existing code and assets:** fonts Andika (SIL), Atkinson Hyperlegible (Braille Institute), and Nunito, all SIL Open Font License. The license files are in `frontend/fonts/`. The UI design was made by Jerich in Figma Make during the hackathon. Everything else was built during the hackathon.
 - **AI development tools:** Claude Code (building and testing), Codex (Qwen integration), Figma Make (UI design), Claude chat (planning).
+- The Dindin mascot and logo were made by Jerich De Venecia during the hackathon.
 
 ## Team
 
-TODO: official team name.
+Team: Out of Tokens
 
-TODO: each person exactly as on the official list, with their role and what they built. Example: "Bian: Qwen integration, local AI features, speed testing."
+Jayvee Dela Rosa: Team lead and project manager. Planning, product direction, frontend restyle and integration.
+
+Bian Avan Toledo: Backend and local AI. Whisper speech checking, Qwen integration, Windows installer.
+
+Jerich De Venecia: Frontend and design. UI design in Figma Make, the Dindin mascot and logo.
+
+Jersylle Nismal: Research and pitch. Stories, problem research, pitch.
 
 ## Limitations
 
 - The sample class has 3 English stories.
 - Whisper's accuracy on Filipino-accented English has not been measured.
 - If Qwen is slow or not running, the quiz uses 2 saved questions and Practice Again uses simple template sentences. The reading check still runs.
-- Speed on an 8GB laptop has not been written up yet. See the TODO table above.
+- Speed on an 8GB laptop has not been measured yet.
